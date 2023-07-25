@@ -2,12 +2,13 @@ package tokenize
 
 import (
 	"fmt"
+	"github.com/Jumpaku/go-assert"
 	"golang.org/x/exp/slices"
 	"strings"
 	"unicode"
 )
 
-func Spaces(s *TokenScanner) (int, TokenCode, error) {
+func Spaces(s *ScanState) (int, TokenCode, error) {
 	if s.Len() == 0 || !unicode.IsSpace(s.PeekAt(0)) {
 		return 0, TokenUnspecified, nil
 	}
@@ -15,7 +16,7 @@ func Spaces(s *TokenScanner) (int, TokenCode, error) {
 	return n, TokenSpace, nil
 }
 
-func Comment(s *TokenScanner) (int, TokenCode, error) {
+func Comment(s *ScanState) (int, TokenCode, error) {
 	if s.Len() == 0 {
 		return 0, TokenUnspecified, nil
 	}
@@ -48,20 +49,13 @@ func Comment(s *TokenScanner) (int, TokenCode, error) {
 	}
 }
 
-func isOctalDigit(r rune) bool {
-	return '0' <= r && r <= '7'
-}
-func isHexDigit(r rune) bool {
-	return ('0' <= r && r <= '7') || ('A' <= r && r <= 'F') || ('a' <= r && r <= 'f')
-}
-
 // expectEscapeSequence returns:
 //   - (0, nil) if s.PeekAt(cur) starts with not backslash
 //   - (<runes of escape sequence>, nil) if valid escape sequence is scanned
 //   - (0, err) if invalid escape sequence is detected
 //
 // Escape sequence: https://cloud.google.com/spanner/docs/reference/standard-sql/lexical#escape_sequences
-func expectEscapeSequence(cur int, s *TokenScanner) (int, error) {
+func expectEscapeSequence(cur int, s *ScanState) (int, error) {
 	errInvalidEscape := func(es string) error { return fmt.Errorf(`invalid excape sequence: %q`, es) }
 	if cur < s.Len() && string(s.PeekAt(cur)) != `\` {
 		return 0, nil
@@ -122,7 +116,7 @@ func expectEscapeSequence(cur int, s *TokenScanner) (int, error) {
 		return 0, errInvalidEscape(string(s.PeekAt(cur)))
 	}
 }
-func expectQuotedToken(quote []rune, prefix []rune, escape bool, s *TokenScanner) (int, error) {
+func expectQuotedToken(quote []rune, prefix []rune, escape bool, s *ScanState) (int, error) {
 	cur := len(prefix)
 	for {
 		foundAt, found := s.FindFirst(cur, len(quote), func(r []rune) bool {
@@ -146,7 +140,7 @@ func expectQuotedToken(quote []rune, prefix []rune, escape bool, s *TokenScanner
 	}
 }
 
-func IdentifierQuoted(s *TokenScanner) (int, TokenCode, error) {
+func IdentifierQuoted(s *ScanState) (int, TokenCode, error) {
 	if s.Len() == 0 || s.PeekAt(0) != '`' {
 		return 0, TokenUnspecified, nil
 	}
@@ -162,7 +156,7 @@ func IdentifierQuoted(s *TokenScanner) (int, TokenCode, error) {
 	return size, TokenIdentifierQuoted, nil
 }
 
-func LiteralQuoted(s *TokenScanner) (int, TokenCode, error) {
+func LiteralQuoted(s *ScanState) (int, TokenCode, error) {
 	errInvalidQuotedLiteral := func(err error) error { return fmt.Errorf(`invalid quorted literal: %w`, err) }
 
 	getPrefix := func() []rune {
@@ -200,4 +194,78 @@ func LiteralQuoted(s *TokenScanner) (int, TokenCode, error) {
 		}
 		return size, TokenLiteralQuoted, nil
 	}
+}
+
+func IdentifierOrKeyword(s *ScanState) (int, TokenCode, error) {
+	if s.Len() == 0 || !isLetter(s.PeekAt(0)) {
+		return 0, TokenUnspecified, nil
+	}
+
+	n := s.CountWhile(1, func(r rune) bool { return isLetter(r) || isDecimalDigit(r) })
+	size := n + 1
+	if isKeyword(s.PeekSlice(0, size)) {
+		return size, TokenKeyword, nil
+	}
+	return size, TokenIdentifier, nil
+}
+
+func NumberOrDot(s *ScanState) (int, TokenCode, error) {
+	if s.Len() == 0 || !(isDecimalDigit(s.PeekAt(0)) || s.PeekAt(0) == '.') {
+		return 0, TokenUnspecified, nil
+	}
+
+	// hexadecimal
+	if s.Len() >= 2 && strings.ToLower(string(s.PeekSlice(0, 2))) == `0x` {
+		nDigits := s.CountWhile(2, isHexDigit)
+		if nDigits == 0 {
+			return 0, TokenUnspecified, fmt.Errorf(`incomplete hex integer: hex digits not found after %s`, string(s.PeekSlice(0, 2)))
+		}
+
+		return nDigits + 2, TokenLiteralInteger, nil
+	}
+
+	// dot operator
+	if s.PeekAt(0) == '.' && s.CountWhile(1, isDecimalDigit) == 0 {
+		return 1, TokenSpecialChar, nil
+	}
+
+	cur := 0
+	if isDecimalDigit(s.PeekAt(cur)) {
+		cur += s.CountWhile(cur, isDecimalDigit)
+		// decimal
+		if cur == s.Len() || s.PeekAt(cur) != '.' {
+			return cur, TokenLiteralInteger, nil
+		}
+	}
+
+	// float
+	assert.State(s.PeekAt(cur) == '.', `should be "." or "DIGIT[DIGITS]."`)
+	cur += s.CountWhile(cur, isDecimalDigit)
+
+	if cur == s.Len() || !(s.PeekAt(cur) == 'e' || s.PeekAt(cur) == 'E') {
+		return cur, TokenLiteralFloat, nil
+	}
+
+	// exponential
+	assert.State(s.PeekAt(cur) == 'e' || s.PeekAt(cur) == 'E', `[DIGITS].[DIGITS][eE]`)
+	cur++
+
+	if cur < s.Len() && (s.PeekAt(cur) == '-' || s.PeekAt(cur) == '+') {
+		cur++
+	}
+
+	nExp := s.CountWhile(cur, isDecimalDigit)
+	if nExp == 0 {
+		return 0, TokenUnspecified, fmt.Errorf(`incomplete float: digits not found after %s`, string(s.PeekSlice(0, cur)))
+	}
+
+	return cur + nExp, TokenLiteralFloat, nil
+}
+
+func SpecialChar(s *ScanState) (int, TokenCode, error) {
+	if s.Len() == 0 || !isSpecialChar(s.PeekAt(0)) {
+		return 0, TokenUnspecified, nil
+	}
+
+	return 1, TokenSpecialChar, nil
 }

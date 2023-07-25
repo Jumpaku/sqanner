@@ -12,12 +12,12 @@ type testcase struct {
 	wantCode  tokenize.TokenCode
 	shouldErr bool
 }
-type scanFunc func(*tokenize.TokenScanner) (int, tokenize.TokenCode, error)
+type scanFunc func(*tokenize.ScanState) (int, tokenize.TokenCode, error)
 
 func check(t *testing.T, testcase testcase, sut scanFunc) {
 	t.Helper()
 
-	gotLen, gotCode, gotErr := sut(tokenize.NewTokenScanner([]rune(testcase.input)))
+	gotLen, gotCode, gotErr := sut(&tokenize.NewTokenScanner([]rune(testcase.input)).ScanState)
 	if (gotErr != nil) != testcase.shouldErr {
 		if testcase.shouldErr {
 			t.Errorf(`%s: input=%q:
@@ -621,6 +621,30 @@ func TestLiteralQuoted(t *testing.T) {
 			wantCode:  tokenize.TokenUnspecified,
 			shouldErr: true,
 		},
+		{message: `quoted literal followed by quotes`,
+			input:     `Rb"""a""""""`,
+			wantLen:   9,
+			wantCode:  tokenize.TokenLiteralQuoted,
+			shouldErr: false,
+		},
+		{message: `quoted literal followed by quotes`,
+			input:     `bR'a''''`,
+			wantLen:   5,
+			wantCode:  tokenize.TokenLiteralQuoted,
+			shouldErr: false,
+		},
+		{message: `quoted literal followed by tokens`,
+			input:     `Rb"""a"""abc`,
+			wantLen:   9,
+			wantCode:  tokenize.TokenLiteralQuoted,
+			shouldErr: false,
+		},
+		{message: `quoted literal followed by tokens`,
+			input:     `bR'a'abc`,
+			wantLen:   5,
+			wantCode:  tokenize.TokenLiteralQuoted,
+			shouldErr: false,
+		},
 	}
 
 	for _, lqTestcase := range lqTestcases {
@@ -631,9 +655,89 @@ func TestLiteralQuoted(t *testing.T) {
 	}
 }
 
-func TestDebug(t *testing.T) {
-	input := `""`
-	s := tokenize.NewTokenScanner([]rune(input))
-	size, code, err := tokenize.LiteralQuoted(s)
-	t.Log(size, code, err)
+func TestIdentifierOrKeyword(t *testing.T) {
+	testcases := []testcase{
+		{message: `empty`,
+			input:     ``,
+			wantLen:   0,
+			wantCode:  tokenize.TokenUnspecified,
+			shouldErr: false,
+		},
+		{message: `starts with not letter`,
+			input:     `1`,
+			wantLen:   0,
+			wantCode:  tokenize.TokenUnspecified,
+			shouldErr: false,
+		},
+		{message: `starts with not letter`,
+			input:     " ",
+			wantLen:   0,
+			wantCode:  tokenize.TokenUnspecified,
+			shouldErr: false,
+		},
+		{message: `starts with underscore`,
+			input:     "_12ab",
+			wantLen:   5,
+			wantCode:  tokenize.TokenIdentifier,
+			shouldErr: false,
+		},
+		{message: `starts with alphabet`,
+			input:     "ab_12",
+			wantLen:   5,
+			wantCode:  tokenize.TokenIdentifier,
+			shouldErr: false,
+		},
+		{message: `identifier starts with keyword`,
+			input:     "SELECT_XYZ",
+			wantLen:   10,
+			wantCode:  tokenize.TokenIdentifier,
+			shouldErr: false,
+		},
+		{message: `identifier followed by tokens`,
+			input:     "_XYZ123 123",
+			wantLen:   7,
+			wantCode:  tokenize.TokenIdentifier,
+			shouldErr: false,
+		},
+		{message: `keyword followed by tokens`,
+			input:     "SELECT 123",
+			wantLen:   6,
+			wantCode:  tokenize.TokenKeyword,
+			shouldErr: false,
+		},
+		{message: `case-insensitive keyword`,
+			input:     "sElEcT",
+			wantLen:   6,
+			wantCode:  tokenize.TokenKeyword,
+			shouldErr: false,
+		},
+		{message: `keyword`,
+			input:     "NUMERIC",
+			wantLen:   7,
+			wantCode:  tokenize.TokenKeyword,
+			shouldErr: false,
+		},
+		{message: `keyword`,
+			input:     "DATE",
+			wantLen:   4,
+			wantCode:  tokenize.TokenKeyword,
+			shouldErr: false,
+		},
+		{message: `keyword`,
+			input:     "TiMeStAmP",
+			wantLen:   9,
+			wantCode:  tokenize.TokenKeyword,
+			shouldErr: false,
+		},
+		{message: `keyword`,
+			input:     "json",
+			wantLen:   4,
+			wantCode:  tokenize.TokenKeyword,
+			shouldErr: false,
+		},
+	}
+
+	for _, testcase := range testcases {
+		check(t, testcase, tokenize.IdentifierOrKeyword)
+	}
 }

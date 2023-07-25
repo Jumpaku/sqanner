@@ -4,20 +4,35 @@ import (
 	"fmt"
 )
 
+// ScanState represents a state for scanning and processing a sequence of runes.
+// It contains the Input slice, which holds the runes to be scanned, and the Cursor
+// indicating the current position in the Input slice.
 type ScanState struct {
 	Input  []rune
 	Cursor int
 }
 
+// Len returns the remaining number of runes in the Input slice from the current Cursor position.
 func (s ScanState) Len() int {
 	return len(s.Input) - s.Cursor
 }
-func (s ScanState) PeekAt(n int) rune {
-	return s.Input[s.Cursor+n]
+
+// PeekAt returns the rune at a given relative position 'offset' from the current Cursor position.
+// 'offset' must be in [0, s.Len()).
+func (s ScanState) PeekAt(offset int) rune {
+	return s.Input[s.Cursor+offset]
 }
+
+// PeekSlice returns a slice of runes starting from 'begin' to 'endExclusive' positions from the current Cursor position.
+// 'begin' must be in [0, s.Len()).
+// 'endExclusive' must be in [0, s.Len()].
 func (s ScanState) PeekSlice(begin int, endExclusive int) []rune {
 	return s.Input[s.Cursor+begin : s.Cursor+endExclusive]
 }
+
+// CountWhile counts the number of runes that satisfy the given function 'satisfy', starting from the 'begin' position from the current Cursor position.
+// The counting stops as soon as a rune that does not satisfy the condition is encountered.
+// 'begin' must be in [0, s.Len()).
 func (s ScanState) CountWhile(begin int, satisfy func(rune) bool) int {
 	count := 0
 	for n := begin; n < s.Len(); n++ {
@@ -29,6 +44,11 @@ func (s ScanState) CountWhile(begin int, satisfy func(rune) bool) int {
 	}
 	return count
 }
+
+// FindFirst searches for the first occurrence of a pattern with the given 'patternSize' using the 'pattern' function, starting from the 'begin' position from the current Cursor position.
+// It returns the index of the first occurrence and a boolean indicating if the pattern was found.
+// If the pattern is not found, it returns the index 's.Len()' and 'false'.
+// 'begin' must be in [0, s.Len()).
 func (s ScanState) FindFirst(begin int, patternSize int, pattern func([]rune) bool) (int, bool) {
 	for n := begin; n < s.Len()-patternSize+1; n++ {
 		if pattern(s.Input[s.Cursor+n : s.Cursor+n+patternSize]) {
@@ -54,48 +74,29 @@ func (s *TokenScanner) ScanNext() (Token, error) {
 		return s.accept(0, TokenEOF), nil
 	}
 
-	type scanFunc func(s *TokenScanner) (int, TokenCode, error)
+	type scanFunc func(s *ScanState) (int, TokenCode, error)
 	var scanners = []scanFunc{
+		/* scanFunc in front have higher priority than those behind. */
 		Spaces,
 		Comment,
 		IdentifierQuoted,
 		LiteralQuoted,
+		IdentifierOrKeyword,
+		NumberOrDot,
+		SpecialChar,
 	}
+
 	for _, scanner := range scanners {
-		n, code, err := scanner(s)
+		size, code, err := scanner(&s.ScanState)
 		if err != nil {
 			return Token{}, s.wrapErr(err)
 		}
 		if code != TokenUnspecified {
-			return s.accept(n, code), nil
+			return s.accept(size, code), nil
 		}
 	}
+
 	return Token{}, s.wrapErr(fmt.Errorf(`invalid character sequense`))
-	/*
-		switch {
-		case isDigit(s.PeekAt(0)):
-			n := s.CountWhile(0, unicode.IsDigit)
-			if s.PeekAt(n) == '.' {
-			}
-			m := s.countIf(func(r rune) bool { return strings.ContainsRune(digitChars, r) })
-			if s.PeekAt(n) == '.' {
-			}
-		case s.PeekAt(0) == '.':
-			if strings.ContainsRune(digitChars, s.PeekAt(1)) {
-			}
-			return s.accept(0, TokenUnspecified), nil
-		case strings.ContainsRune(specialChars, s.PeekAt(0)):
-			return s.accept(0, TokenUnspecified), nil
-		case strings.ContainsRune(letterChars, s.PeekAt(0)):
-			n := s.countIf(func(r rune) bool { return strings.ContainsRune(letterChars+digitChars, r) })
-			lowerSlice := strings.ToUpper(string(s.PeekSlice(0, n)))
-			if keywords[lowerSlice] {
-				return s.accept(0, TokenUnspecified), nil
-			}
-			return s.accept(0, TokenUnspecified), nil
-		}
-		return s.accept(0, TokenUnspecified), nil
-	*/
 }
 
 func (s *TokenScanner) accept(n int, code TokenCode) Token {
@@ -118,6 +119,7 @@ func (s *TokenScanner) accept(n int, code TokenCode) Token {
 	}
 	return token
 }
+
 func (s *TokenScanner) wrapErr(err error) error {
 	sizeAfter := 20
 	if sizeAfter > s.Len() {
