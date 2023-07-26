@@ -8,11 +8,18 @@ import (
 	"unicode"
 )
 
+// Spaces scans the input sequence represented by the ScanState 's' to find the number of consecutive space runes at the current Cursor position.
+// It returns the count of runes in the scanned token, along with the corresponding TokenCode, and an error if any occurs during processing.
+// If there are no spaces at the current Cursor position, the function returns 0 for the count, TokenUnspecified for the TokenCode, and nil for the error.
+// The TokenCode represents the type of token found, and in this case, it will be TokenSpace to indicate space runes.
+// The function utilizes the CountWhile method of ScanState to efficiently count the consecutive spaces in the input sequence.
 func Spaces(s *ScanState) (int, TokenCode, error) {
 	if s.Len() == 0 || !unicode.IsSpace(s.PeekAt(0)) {
 		return 0, TokenUnspecified, nil
 	}
+
 	n := s.CountWhile(0, unicode.IsSpace)
+
 	return n, TokenSpace, nil
 }
 
@@ -264,6 +271,10 @@ func NumberOrDot(s *ScanState) (int, TokenCode, error) {
 
 func SpecialChar(s *ScanState) (int, TokenCode, error) {
 	if s.Len() == 0 || !isSpecialChar(s.PeekAt(0)) {
+		return 0, TokenUnspecified, nil
+	}
+
+	if s.Len() >= 2 && s.PeekAt(0) == '.' && isDecimalDigit(s.PeekAt(1)) {
 		return 0, TokenUnspecified, nil
 	}
 

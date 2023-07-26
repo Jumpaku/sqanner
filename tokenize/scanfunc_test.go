@@ -741,3 +741,70 @@ func TestIdentifierOrKeyword(t *testing.T) {
 		check(t, testcase, tokenize.IdentifierOrKeyword)
 	}
 }
+
+func TestSpecialChar(t *testing.T) {
+	testcases := []testcase{
+		{message: `empty`,
+			input:     ``,
+			wantLen:   0,
+			wantCode:  tokenize.TokenUnspecified,
+			shouldErr: false,
+		},
+		{message: `number`,
+			input:     `1`,
+			wantLen:   0,
+			wantCode:  tokenize.TokenUnspecified,
+			shouldErr: false,
+		},
+		{message: `underscore`,
+			input:     "_",
+			wantLen:   0,
+			wantCode:  tokenize.TokenUnspecified,
+			shouldErr: false,
+		},
+		{message: `space`,
+			input:     " ",
+			wantLen:   0,
+			wantCode:  tokenize.TokenUnspecified,
+			shouldErr: false,
+		},
+		{message: `alphabet`,
+			input:     "a",
+			wantLen:   0,
+			wantCode:  tokenize.TokenUnspecified,
+			shouldErr: false,
+		},
+		{message: `double symbols`,
+			input:     ">>",
+			wantLen:   1,
+			wantCode:  tokenize.TokenSpecialChar,
+			shouldErr: false,
+		},
+		{message: `double symbols`,
+			input:     ".>",
+			wantLen:   1,
+			wantCode:  tokenize.TokenSpecialChar,
+			shouldErr: false,
+		},
+		{message: `dot followed by number`,
+			input:     ".0",
+			wantLen:   0,
+			wantCode:  tokenize.TokenUnspecified,
+			shouldErr: false,
+		},
+	}
+
+	for _, c := range []rune("@,()[]{}<>.;:/+-~*|&^=!$?") {
+		testcases = append(testcases, testcase{
+			message:   `special`,
+			input:     string(c),
+			wantLen:   1,
+			wantCode:  tokenize.TokenSpecialChar,
+			shouldErr: false,
+		})
+	}
+
+	for _, testcase := range testcases {
+		check(t, testcase, tokenize.SpecialChar)
+	}
+}
