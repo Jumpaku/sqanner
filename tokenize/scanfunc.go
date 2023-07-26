@@ -2,17 +2,15 @@ package tokenize
 
 import (
 	"fmt"
-	"github.com/Jumpaku/go-assert"
 	"golang.org/x/exp/slices"
 	"strings"
 	"unicode"
 )
 
 // Spaces scans the input sequence represented by the ScanState 's' to find the number of consecutive space runes at the current Cursor position.
-// It returns the count of runes in the scanned token, along with the corresponding TokenCode, and an error if any occurs during processing.
-// If there are no spaces at the current Cursor position, the function returns 0 for the count, TokenUnspecified for the TokenCode, and nil for the error.
-// The TokenCode represents the type of token found, and in this case, it will be TokenSpace to indicate space runes.
-// The function utilizes the CountWhile method of ScanState to efficiently count the consecutive spaces in the input sequence.
+// It returns the count of runes in the scanned space token and the corresponding TokenCode.
+// If no spaces are found at the current Cursor position, the function returns 0 for the count and TokenUnspecified for the TokenCode.
+// If an error occurs during processing, it will be returned as the third value, which will be nil in this implementation.
 func Spaces(s *ScanState) (int, TokenCode, error) {
 	if s.Len() == 0 || !unicode.IsSpace(s.PeekAt(0)) {
 		return 0, TokenUnspecified, nil
@@ -23,6 +21,13 @@ func Spaces(s *ScanState) (int, TokenCode, error) {
 	return n, TokenSpace, nil
 }
 
+// Comment scans the input sequence represented by the ScanState 's' to identify and handle comments.
+// It returns the count of runes in the scanned comment token and the corresponding TokenCode.
+// If no comments are found at the current Cursor position, the function returns 0 for the count and TokenUnspecified for the TokenCode.
+// If the comment starts with '#' and extends to the end of the line, the function returns the count of runes up to the newline character.
+// If the comment starts with '//' or '--' and extends to the end of the line, the function returns the count of runes up to the newline character.
+// If the comment starts with '/*' and ends with '*/', the function returns the count of runes up to the closing '*/' sequence.
+// If the comment is not properly terminated with '*/', the function returns an error with a message indicating an incomplete comment.
 func Comment(s *ScanState) (int, TokenCode, error) {
 	if s.Len() == 0 {
 		return 0, TokenUnspecified, nil
@@ -112,9 +117,7 @@ func expectEscapeSequence(cur int, s *ScanState) (int, error) {
 		if cur+size > s.Len() {
 			return 0, errInvalidEscape(string(s.PeekSlice(cur, s.Len())))
 		}
-		if v := s.PeekSlice(cur, cur+size); slices.ContainsFunc(v[2:], func(r rune) bool {
-			return !(('0' <= r && r <= '7') || ('A' <= r && r <= 'F') || ('a' <= r && r <= 'f'))
-		}) {
+		if v := s.PeekSlice(cur, cur+size); slices.ContainsFunc(v[2:], func(r rune) bool { return !isHexDigit(r) }) {
 			return 0, errInvalidEscape(string(v))
 		}
 
@@ -147,6 +150,11 @@ func expectQuotedToken(quote []rune, prefix []rune, escape bool, s *ScanState) (
 	}
 }
 
+// IdentifierQuoted scans the input sequence represented by the ScanState 's' to identify and handle quoted identifiers enclosed within back quotes (`).
+// It returns the count of runes in the scanned quoted identifier token and the corresponding TokenCode.
+// If no quoted identifier is found at the current Cursor position, the function returns 0 for the count and TokenUnspecified for the TokenCode.
+// If the quoted identifier is empty (two consecutive backticks), the function returns an error indicating an empty quoted identifier.
+// If the quoted identifier is not properly enclosed within backticks, the function returns an error with a message indicating an invalid quoted identifier.
 func IdentifierQuoted(s *ScanState) (int, TokenCode, error) {
 	if s.Len() == 0 || s.PeekAt(0) != '`' {
 		return 0, TokenUnspecified, nil
@@ -163,6 +171,9 @@ func IdentifierQuoted(s *ScanState) (int, TokenCode, error) {
 	return size, TokenIdentifierQuoted, nil
 }
 
+// LiteralQuoted scans the input sequence represented by the ScanState 's' to identify and handle quoted literals (strings or bytes) with optional prefixes.
+// It returns the count of runes in the scanned quoted literal, the corresponding TokenCode, and an error if any occurs during processing.
+// If no quoted literal is found at the current Cursor position, the function returns 0 for the count, TokenUnspecified for the TokenCode, and nil for the error.
 func LiteralQuoted(s *ScanState) (int, TokenCode, error) {
 	errInvalidQuotedLiteral := func(err error) error { return fmt.Errorf(`invalid quorted literal: %w`, err) }
 
@@ -203,6 +214,11 @@ func LiteralQuoted(s *ScanState) (int, TokenCode, error) {
 	}
 }
 
+// IdentifierOrKeyword scans the input sequence represented by the ScanState 's' to identify and handle identifiers or keywords.
+// It returns the count of runes in the scanned identifier or keyword, the corresponding TokenCode, and an error if any occurs during processing.
+// If no identifier or keyword is found at the current Cursor position, the function returns 0 for the count, TokenUnspecified for the TokenCode, and nil for the error.
+// If the scanned token is a keyword, the function returns the count of runes in the scanned keyword and TokenCode TokenKeyword.
+// If the scanned token is an identifier, the function returns the count of runes in the scanned identifier and TokenCode TokenIdentifier.
 func IdentifierOrKeyword(s *ScanState) (int, TokenCode, error) {
 	if s.Len() == 0 || !isLetter(s.PeekAt(0)) {
 		return 0, TokenUnspecified, nil
@@ -216,6 +232,13 @@ func IdentifierOrKeyword(s *ScanState) (int, TokenCode, error) {
 	return size, TokenIdentifier, nil
 }
 
+// NumberOrDot scans the input sequence represented by the ScanState 's' to identify and handle numbers or the dot (.) operator.
+// It returns the count of runes in the scanned number or dot operator, the corresponding TokenCode, and an error if any occurs during processing.
+// If no number or dot operator is found at the current Cursor position, the function returns 0 for the count, TokenUnspecified for the TokenCode, and nil for the error.
+// The function recognizes hexadecimal integers (starting with "0x"), decimals (with or without a decimal point), and floating-point numbers (with or without an exponent using 'e' or 'E').
+// If the scanned token is the dot (.) operator, the function returns 1 for the count and TokenCode TokenSpecialChar.
+// If the scanned token is an integer (either decimal or hexadecimal), the function returns the count of runes in the scanned integer and TokenCode TokenLiteralInteger.
+// If the scanned token is a floating-point number, the function returns the count of runes in the scanned number and TokenCode TokenLiteralFloat.
 func NumberOrDot(s *ScanState) (int, TokenCode, error) {
 	if s.Len() == 0 || !(isDecimalDigit(s.PeekAt(0)) || s.PeekAt(0) == '.') {
 		return 0, TokenUnspecified, nil
@@ -240,22 +263,26 @@ func NumberOrDot(s *ScanState) (int, TokenCode, error) {
 	if isDecimalDigit(s.PeekAt(cur)) {
 		cur += s.CountWhile(cur, isDecimalDigit)
 		// decimal
-		if cur == s.Len() || s.PeekAt(cur) != '.' {
+		if cur == s.Len() || !(s.PeekAt(cur) == '.' || s.PeekAt(cur) == 'e' || s.PeekAt(cur) == 'E') {
 			return cur, TokenLiteralInteger, nil
 		}
 	}
 
 	// float
-	assert.State(s.PeekAt(cur) == '.', `should be "." or "DIGIT[DIGITS]."`)
-	cur += s.CountWhile(cur, isDecimalDigit)
+	if s.PeekAt(cur) == '.' {
+		cur++
+		cur += s.CountWhile(cur, isDecimalDigit)
+	}
 
 	if cur == s.Len() || !(s.PeekAt(cur) == 'e' || s.PeekAt(cur) == 'E') {
 		return cur, TokenLiteralFloat, nil
 	}
 
 	// exponential
-	assert.State(s.PeekAt(cur) == 'e' || s.PeekAt(cur) == 'E', `[DIGITS].[DIGITS][eE]`)
 	cur++
+	if cur == s.Len() {
+		return 0, TokenUnspecified, fmt.Errorf(`incomplete float: [+-] or digits not found after %s`, string(s.PeekSlice(0, cur)))
+	}
 
 	if cur < s.Len() && (s.PeekAt(cur) == '-' || s.PeekAt(cur) == '+') {
 		cur++
@@ -269,6 +296,11 @@ func NumberOrDot(s *ScanState) (int, TokenCode, error) {
 	return cur + nExp, TokenLiteralFloat, nil
 }
 
+// SpecialChar scans the input sequence represented by the ScanState 's' to identify and handle special characters.
+// It returns the count of runes in the scanned special character, the corresponding TokenCode, and an error if any occurs during processing.
+// If no special character is found at the current Cursor position, the function returns 0 for the count, TokenUnspecified for the TokenCode, and nil for the error.
+// If the scanned token is a dot (.) character followed by a decimal digit, the function returns 0 for the count, TokenUnspecified for the TokenCode, and nil.
+// For all other cases, where the current rune represents a standalone special character, the function returns 1 for the count and TokenCode TokenSpecialChar.
 func SpecialChar(s *ScanState) (int, TokenCode, error) {
 	if s.Len() == 0 || !isSpecialChar(s.PeekAt(0)) {
 		return 0, TokenUnspecified, nil

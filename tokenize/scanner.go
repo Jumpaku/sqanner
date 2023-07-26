@@ -59,16 +59,19 @@ func (s ScanState) FindFirst(begin int, patternSize int, pattern func([]rune) bo
 	return s.Len(), false
 }
 
+// TokenScanner provides a tokenizer for processing a sequence of runes and identifying different types of tokens.
 type TokenScanner struct {
 	ScanState
 	lines   int
 	columns int
 }
 
-func NewTokenScanner(input []rune) *TokenScanner {
-	return &TokenScanner{ScanState: ScanState{Input: input}}
+func (s *TokenScanner) Init(input []rune) {
+	s.ScanState = ScanState{Input: input}
 }
 
+// ScanNext scans the next token in the input sequence and returns the Token and an error if any occurs during processing.
+// If the end of the input sequence is reached, the method returns a special Token with TokenCode TokenEOF to indicate the end of the file.
 func (s *TokenScanner) ScanNext() (Token, error) {
 	if s.Len() == 0 {
 		return s.accept(0, TokenEOF), nil
