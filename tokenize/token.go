@@ -80,14 +80,14 @@ func (c TokenCode) String() string {
 // A valid token has its TokenCode set to a specific type (not TokenUnspecified).
 // It contains the following fields:
 // - Code: The TokenCode representing the type of the token.
-// - Content: The content or value of the token as a string.
+// - Content: The content or value of the token.
 // - Begin: The starting position (index) of the token in the input sequence.
 // - End: The ending position (index) of the token in the input sequence.
 // - Line: The line number where the token starts in the input source.
 // - Column: The column number where the token starts in the input source.
 type Token struct {
 	Code    TokenCode
-	Content string
+	Content []rune
 
 	Begin  int
 	End    int

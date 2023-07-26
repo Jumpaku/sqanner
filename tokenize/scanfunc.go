@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"golang.org/x/exp/slices"
 	"strings"
-	"unicode"
 )
 
 // Spaces scans the input sequence represented by the ScanState 's' to find the number of consecutive space runes at the current Cursor position.
@@ -12,11 +11,11 @@ import (
 // If no spaces are found at the current Cursor position, the function returns 0 for the count and TokenUnspecified for the TokenCode.
 // If an error occurs during processing, it will be returned as the third value, which will be nil in this implementation.
 func Spaces(s *ScanState) (int, TokenCode, error) {
-	if s.Len() == 0 || !unicode.IsSpace(s.PeekAt(0)) {
+	if s.Len() == 0 || !isSpace(s.PeekAt(0)) {
 		return 0, TokenUnspecified, nil
 	}
 
-	n := s.CountWhile(0, unicode.IsSpace)
+	n := s.CountWhile(0, isSpace)
 
 	return n, TokenSpace, nil
 }
@@ -244,14 +243,30 @@ func NumberOrDot(s *ScanState) (int, TokenCode, error) {
 		return 0, TokenUnspecified, nil
 	}
 
+	errInvalidInteger := func(err error) (int, TokenCode, error) {
+		return 0, TokenUnspecified, fmt.Errorf(`invalid integer literal: %w`, err)
+	}
+	errInvalidFloat := func(err error) (int, TokenCode, error) {
+		return 0, TokenUnspecified, fmt.Errorf(`invalid float literal: %w`, err)
+	}
+
 	// hexadecimal
 	if s.Len() >= 2 && strings.ToLower(string(s.PeekSlice(0, 2))) == `0x` {
 		nDigits := s.CountWhile(2, isHexDigit)
 		if nDigits == 0 {
-			return 0, TokenUnspecified, fmt.Errorf(`incomplete hex integer: hex digits not found after %s`, string(s.PeekSlice(0, 2)))
+			return errInvalidInteger(fmt.Errorf(`incomplete hex integer literal: hex digits not found after %q`, string(s.PeekSlice(0, 2))))
 		}
 
-		return nDigits + 2, TokenLiteralInteger, nil
+		cur := 2 + nDigits
+		if cur == s.Len() {
+			return cur, TokenLiteralInteger, nil
+		}
+
+		if !(isSpecialChar(s.PeekAt(cur)) || isSpace(s.PeekAt(cur))) {
+			return errInvalidInteger(fmt.Errorf(`non hexadecimal digit %q found in %q`, s.PeekAt(cur), string(s.PeekSlice(0, cur+1))))
+		}
+
+		return cur, TokenLiteralInteger, nil
 	}
 
 	// dot operator
@@ -261,9 +276,17 @@ func NumberOrDot(s *ScanState) (int, TokenCode, error) {
 
 	cur := 0
 	if isDecimalDigit(s.PeekAt(cur)) {
-		cur += s.CountWhile(cur, isDecimalDigit)
 		// decimal
-		if cur == s.Len() || !(s.PeekAt(cur) == '.' || s.PeekAt(cur) == 'e' || s.PeekAt(cur) == 'E') {
+		cur += s.CountWhile(cur, isDecimalDigit)
+		if cur == s.Len() {
+			return cur, TokenLiteralInteger, nil
+		}
+
+		if back := s.PeekAt(cur); !(back == '.' || back == 'e' || back == 'E') {
+			if !(isSpecialChar(back) || isSpace(back)) {
+				return errInvalidInteger(fmt.Errorf(`non decimal digit %q found in %q`, back, string(s.PeekSlice(0, cur+1))))
+			}
+
 			return cur, TokenLiteralInteger, nil
 		}
 	}
@@ -274,14 +297,21 @@ func NumberOrDot(s *ScanState) (int, TokenCode, error) {
 		cur += s.CountWhile(cur, isDecimalDigit)
 	}
 
-	if cur == s.Len() || !(s.PeekAt(cur) == 'e' || s.PeekAt(cur) == 'E') {
+	if cur == s.Len() {
+		return cur, TokenLiteralFloat, nil
+	}
+	if back := s.PeekAt(cur); !(back == 'e' || back == 'E') {
+		if !(isSpecialChar(back) || isSpace(back)) {
+			return errInvalidFloat(fmt.Errorf(`non decimal digit %q found in %q`, back, string(s.PeekSlice(0, cur+1))))
+		}
+
 		return cur, TokenLiteralFloat, nil
 	}
 
 	// exponential
 	cur++
 	if cur == s.Len() {
-		return 0, TokenUnspecified, fmt.Errorf(`incomplete float: [+-] or digits not found after %s`, string(s.PeekSlice(0, cur)))
+		return errInvalidFloat(fmt.Errorf(`incomplete float literal: '+', '-', or digits not found after %q`, string(s.PeekSlice(0, cur))))
 	}
 
 	if cur < s.Len() && (s.PeekAt(cur) == '-' || s.PeekAt(cur) == '+') {
@@ -290,10 +320,18 @@ func NumberOrDot(s *ScanState) (int, TokenCode, error) {
 
 	nExp := s.CountWhile(cur, isDecimalDigit)
 	if nExp == 0 {
-		return 0, TokenUnspecified, fmt.Errorf(`incomplete float: digits not found after %s`, string(s.PeekSlice(0, cur)))
+		return errInvalidFloat(fmt.Errorf(`incomplete float literal: digits not found after %q`, string(s.PeekSlice(0, cur))))
 	}
 
-	return cur + nExp, TokenLiteralFloat, nil
+	cur += nExp
+
+	if cur < s.Len() {
+		if back := s.PeekAt(cur); !(isSpecialChar(back) || isSpace(back)) {
+			return errInvalidFloat(fmt.Errorf(`non decimal digit %q found in %q`, back, string(s.PeekSlice(0, cur+2))))
+		}
+	}
+
+	return cur, TokenLiteralFloat, nil
 }
 
 // SpecialChar scans the input sequence represented by the ScanState 's' to identify and handle special characters.

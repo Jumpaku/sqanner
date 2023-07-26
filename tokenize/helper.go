@@ -1,6 +1,9 @@
 package tokenize
 
-import "strings"
+import (
+	"strings"
+	"unicode"
+)
 
 func isOctalDigit(r rune) bool {
 	return '0' <= r && r <= '7'
@@ -137,4 +140,8 @@ var specialCharTable = func() []bool {
 
 func isSpecialChar(r rune) bool {
 	return specialCharTable[r]
+}
+
+func isSpace(r rune) bool {
+	return unicode.IsSpace(r)
 }

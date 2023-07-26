@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-type testcase struct {
+type testcaseScan struct {
 	message   string
 	input     string
 	wantLen   int
@@ -14,7 +14,7 @@ type testcase struct {
 }
 type scanFunc func(*tokenize.ScanState) (int, tokenize.TokenCode, error)
 
-func check(t *testing.T, testcase testcase, sut scanFunc) {
+func checkScan(t *testing.T, testcase testcaseScan, sut scanFunc) {
 	t.Helper()
 
 	gotLen, gotCode, gotErr := sut(&tokenize.ScanState{Input: []rune(testcase.input)})
@@ -37,7 +37,7 @@ func check(t *testing.T, testcase testcase, sut scanFunc) {
 }
 
 func TestSpaces(t *testing.T) {
-	testcases := []testcase{
+	testcases := []testcaseScan{
 		{message: `empty`,
 			input:     ``,
 			wantLen:   0,
@@ -65,12 +65,12 @@ func TestSpaces(t *testing.T) {
 	}
 
 	for _, testcase := range testcases {
-		check(t, testcase, tokenize.Spaces)
+		checkScan(t, testcase, tokenize.Spaces)
 	}
 }
 
 func TestComment(t *testing.T) {
-	testcases := []testcase{
+	testcases := []testcaseScan{
 		{message: `empty`,
 			input:     ``,
 			wantLen:   0,
@@ -200,12 +200,12 @@ func TestComment(t *testing.T) {
 	}
 
 	for _, testcase := range testcases {
-		check(t, testcase, tokenize.Comment)
+		checkScan(t, testcase, tokenize.Comment)
 	}
 }
 
 func TestIdentifierQuoted(t *testing.T) {
-	testcases := []testcase{
+	testcases := []testcaseScan{
 		{message: `empty`,
 			input:     ``,
 			wantLen:   0,
@@ -317,7 +317,7 @@ func TestIdentifierQuoted(t *testing.T) {
 	}
 
 	for _, testcase := range testcases {
-		check(t, testcase, tokenize.IdentifierQuoted)
+		checkScan(t, testcase, tokenize.IdentifierQuoted)
 	}
 }
 
@@ -331,8 +331,8 @@ func TestLiteralQuoted(t *testing.T) {
 		wantCode       tokenize.TokenCode
 		shouldErr      bool
 	}
-	toTestcases := func(c lqTestcase) []testcase {
-		ts := []testcase{}
+	toTestcases := func(c lqTestcase) []testcaseScan {
+		ts := []testcaseScan{}
 		for _, prefix := range c.prefix {
 			for _, quote := range c.quote {
 				input := prefix + quote + c.content + quote
@@ -340,7 +340,7 @@ func TestLiteralQuoted(t *testing.T) {
 				if !c.shouldErr {
 					wantLen = c.wantContentLen + +len(prefix) + 2*len(quote)
 				}
-				ts = append(ts, testcase{
+				ts = append(ts, testcaseScan{
 					message:   c.message + `: ` + input,
 					input:     input,
 					wantLen:   wantLen,
@@ -610,7 +610,7 @@ func TestLiteralQuoted(t *testing.T) {
 		},
 	}
 
-	testcases := []testcase{
+	testcases := []testcaseScan{
 		{message: `empty`,
 			input:     ``,
 			wantLen:   0,
@@ -659,12 +659,12 @@ func TestLiteralQuoted(t *testing.T) {
 		testcases = append(testcases, toTestcases(lqTestcase)...)
 	}
 	for _, testcase := range testcases {
-		check(t, testcase, tokenize.LiteralQuoted)
+		checkScan(t, testcase, tokenize.LiteralQuoted)
 	}
 }
 
 func TestIdentifierOrKeyword(t *testing.T) {
-	testcases := []testcase{
+	testcases := []testcaseScan{
 		{message: `empty`,
 			input:     ``,
 			wantLen:   0,
@@ -746,12 +746,12 @@ func TestIdentifierOrKeyword(t *testing.T) {
 	}
 
 	for _, testcase := range testcases {
-		check(t, testcase, tokenize.IdentifierOrKeyword)
+		checkScan(t, testcase, tokenize.IdentifierOrKeyword)
 	}
 }
 
 func TestNumberOrDot(t *testing.T) {
-	testcases := []testcase{
+	testcases := []testcaseScan{
 		{message: `empty`,
 			input:     ``,
 			wantLen:   0,
@@ -862,9 +862,9 @@ func TestNumberOrDot(t *testing.T) {
 		},
 		{message: `starts with 0x`,
 			input:     `1x1234`,
-			wantLen:   1,
-			wantCode:  tokenize.TokenLiteralInteger,
-			shouldErr: false,
+			wantLen:   0,
+			wantCode:  tokenize.TokenUnspecified,
+			shouldErr: true,
 		},
 		{message: `starts with 0x`,
 			input:     `0xFf09aA`,
@@ -874,15 +874,21 @@ func TestNumberOrDot(t *testing.T) {
 		},
 		{message: `starts with 0x`,
 			input:     `0X1fG`,
-			wantLen:   4,
+			wantLen:   0,
+			wantCode:  tokenize.TokenUnspecified,
+			shouldErr: true,
+		},
+		{message: `starts with 0x`,
+			input:     `0X09afAF+`,
+			wantLen:   8,
 			wantCode:  tokenize.TokenLiteralInteger,
 			shouldErr: false,
 		},
-		{message: `simple integer`,
+		{message: `invalid integer`,
 			input:     `0A`,
-			wantLen:   1,
-			wantCode:  tokenize.TokenLiteralInteger,
-			shouldErr: false,
+			wantLen:   0,
+			wantCode:  tokenize.TokenUnspecified,
+			shouldErr: true,
 		},
 		{message: `simple integer`,
 			input:     `1`,
@@ -981,12 +987,6 @@ func TestNumberOrDot(t *testing.T) {
 			shouldErr: true,
 		},
 		{message: `invalid float`,
-			input:     `4e`,
-			wantLen:   0,
-			wantCode:  tokenize.TokenUnspecified,
-			shouldErr: true,
-		},
-		{message: `invalid float`,
 			input:     `1.Ee`,
 			wantLen:   0,
 			wantCode:  tokenize.TokenUnspecified,
@@ -1019,12 +1019,12 @@ func TestNumberOrDot(t *testing.T) {
 	}
 
 	for _, testcase := range testcases {
-		check(t, testcase, tokenize.NumberOrDot)
+		checkScan(t, testcase, tokenize.NumberOrDot)
 	}
 }
 
 func TestSpecialChar(t *testing.T) {
-	testcases := []testcase{
+	testcases := []testcaseScan{
 		{message: `empty`,
 			input:     ``,
 			wantLen:   0,
@@ -1076,7 +1076,7 @@ func TestSpecialChar(t *testing.T) {
 	}
 
 	for _, c := range []rune("@,()[]{}<>.;:/+-~*|&^=!$?") {
-		testcases = append(testcases, testcase{
+		testcases = append(testcases, testcaseScan{
 			message:   `special`,
 			input:     string(c),
 			wantLen:   1,
@@ -1086,6 +1086,12 @@ func TestSpecialChar(t *testing.T) {
 	}
 
 	for _, testcase := range testcases {
-		check(t, testcase, tokenize.SpecialChar)
+		checkScan(t, testcase, tokenize.SpecialChar)
 	}
+}
+
+func TestDebug(t *testing.T) {
+	input := ".10e+912"
+	n, c, err := tokenize.NumberOrDot(&tokenize.ScanState{Input: []rune(input)})
+	t.Log(n, c, err)
 }

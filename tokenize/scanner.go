@@ -106,7 +106,7 @@ func (s *TokenScanner) accept(n int, code TokenCode) Token {
 	out := s.Input[s.Cursor : s.Cursor+n]
 	token := Token{
 		Code:    code,
-		Content: string(out),
+		Content: out,
 		Begin:   s.Cursor,
 		End:     s.Cursor + n,
 		Line:    s.lines,
@@ -134,4 +134,22 @@ func (s *TokenScanner) wrapErr(err error) error {
 	}
 	input := string(s.Input[s.Cursor-sizeBefore : s.Cursor+sizeAfter])
 	return fmt.Errorf(`fail to scan token at line %d column %d near ...%s...: %w`, s.lines, s.columns, input, err)
+}
+
+// Tokenize returns a slice of Token representing the identified tokens in the input sequence.
+// If an error occurs during tokenization, the function returns an error with a message indicating the failure to tokenize.
+func Tokenize(input []rune) ([]Token, error) {
+	scanner := &TokenScanner{}
+	scanner.Init(input)
+	var tokens []Token
+	for {
+		token, err := scanner.ScanNext()
+		if err != nil {
+			return nil, fmt.Errorf(`fail to tokenize: %w`, err)
+		}
+		tokens = append(tokens, token)
+		if token.Code == TokenEOF {
+			return tokens, nil
+		}
+	}
 }
