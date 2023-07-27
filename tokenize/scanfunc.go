@@ -45,7 +45,7 @@ func Comment(s *ScanState) (int, TokenCode, error) {
 	switch string(s.PeekSlice(0, 2)) {
 	default:
 		return 0, TokenUnspecified, nil
-	case `//`, `--`:
+	case `--`:
 		foundAt, found := s.FindFirst(2, 1, func(r []rune) bool { return string(r) == "\n" })
 		if found {
 			return foundAt + 1, TokenComment, nil
@@ -344,8 +344,20 @@ func SpecialChar(s *ScanState) (int, TokenCode, error) {
 		return 0, TokenUnspecified, nil
 	}
 
-	if s.Len() >= 2 && s.PeekAt(0) == '.' && isDecimalDigit(s.PeekAt(1)) {
-		return 0, TokenUnspecified, nil
+	if s.Len() >= 2 {
+		prefix := s.PeekSlice(0, 2)
+
+		if prefix[0] == '.' && isDecimalDigit(prefix[1]) {
+			return 0, TokenUnspecified, nil
+		}
+
+		if string(prefix) == `--` {
+			return 0, TokenUnspecified, nil
+		}
+
+		if string(prefix) == `/*` {
+			return 0, TokenUnspecified, nil
+		}
 	}
 
 	return 1, TokenSpecialChar, nil

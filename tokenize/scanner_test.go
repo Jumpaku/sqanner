@@ -58,7 +58,8 @@ func testTokenize(t *testing.T, testcase testcaseTokenize) {
 	}
 }
 
-func TestTokenize(t *testing.T) {
+func TestTokenize_Identifiers(t *testing.T) {
+	// https://cloud.google.com/spanner/docs/reference/standard-sql/lexical#identifiers
 	testcases := []testcaseTokenize{
 		{
 			message: `valid identifiers`,
@@ -121,7 +122,7 @@ func TestTokenize(t *testing.T) {
 			input:   "-- Valid. `GROUP` and dataField are valid identifiers.\n`GROUP`.dataField",
 			wantTokens: []tokenize.TokenCode{
 				tokenize.TokenComment,
-				tokenize.TokenIdentifier,
+				tokenize.TokenIdentifierQuoted,
 				tokenize.TokenSpecialChar,
 				tokenize.TokenIdentifier,
 				tokenize.TokenEOF,
@@ -174,7 +175,7 @@ func TestTokenize(t *testing.T) {
 				tokenize.TokenComment,
 				tokenize.TokenIdentifier,
 				tokenize.TokenSpecialChar,
-				tokenize.TokenKeyword,
+				tokenize.TokenIdentifier,
 				tokenize.TokenSpecialChar,
 				tokenize.TokenLiteralInteger,
 				tokenize.TokenSpecialChar,
@@ -194,6 +195,1079 @@ func TestTokenize(t *testing.T) {
 				tokenize.TokenIdentifier,
 				tokenize.TokenSpecialChar,
 				tokenize.TokenIdentifier,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+	}
+
+	for _, testcase := range testcases {
+		testTokenize(t, testcase)
+	}
+}
+
+func TestTokenize_PathExpression(t *testing.T) {
+	// https://cloud.google.com/spanner/docs/reference/standard-sql/lexical#path_expressions
+	testcases := []testcaseTokenize{
+		{
+			message: `valid path expression`,
+			input:   "foo.bar",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenIdentifier,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `valid path expression`,
+			input:   "foo.bar/25",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `valid path expression`,
+			input:   "foo/bar:25",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `valid path expression`,
+			input:   "foo/bar/25-31",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `valid path expression`,
+			input:   "/foo/bar",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenSpecialChar,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenIdentifier,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `valid path expression`,
+			input:   "/25/foo/bar",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenSpecialChar,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenIdentifier,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+	}
+
+	for _, testcase := range testcases {
+		testTokenize(t, testcase)
+	}
+}
+
+func TestTokenize_StringAndByteLiteral(t *testing.T) {
+	// https://cloud.google.com/spanner/docs/reference/standard-sql/lexical#string_and_bytes_literals
+	testcases := []testcaseTokenize{
+		{
+			message: `quoted string`,
+			input:   "\"abc\"",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `quoted string`,
+			input:   "\"it's\"",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `quoted string`,
+			input:   "'it\\'s'",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `quoted string`,
+			input:   "'Title: \"Boy\"'",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `triple-quoted string`,
+			input:   "\"\"\"abc\"\"\"",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `triple-quoted string`,
+			input:   "'''it's'''",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `triple-quoted string`,
+			input:   "'''Title:\"Boy\"'''",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `triple-quoted string`,
+			input:   "'''two\nlines'''",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `triple-quoted string`,
+			input:   "'''why\\?'''",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `raw string`,
+			input:   "r\"abc+\"",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `raw string`,
+			input:   "r'''abc+'''",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `raw string`,
+			input:   "r\"\"\"abc+\"\"\"",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `raw string`,
+			input:   "r'f\\(abc,(.*),def\\)'",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `bytes`,
+			input:   "B\"abc\"",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `bytes`,
+			input:   "B'''abc'''",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `bytes`,
+			input:   "b\"\"\"abc\"\"\"",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `raw bytes`,
+			input:   "br'abc+'",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `raw bytes`,
+			input:   "RB\"abc+\"",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `raw bytes`,
+			input:   "RB'''abc'''",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+	}
+
+	for _, testcase := range testcases {
+		testTokenize(t, testcase)
+	}
+}
+
+func TestTokenize_IntegerLiteral(t *testing.T) {
+	// https://cloud.google.com/spanner/docs/reference/standard-sql/lexical#integer_literals
+	testcases := []testcaseTokenize{
+		{
+			message: `integer`,
+			input:   "123",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `integer`,
+			input:   "0xABC",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `integer`,
+			input:   "-123",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenSpecialChar,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+	}
+
+	for _, testcase := range testcases {
+		testTokenize(t, testcase)
+	}
+}
+
+func TestTokenize_NumericLiteral(t *testing.T) {
+	// https://cloud.google.com/spanner/docs/reference/standard-sql/lexical#numeric_literals
+	testcases := []testcaseTokenize{
+		{
+			message: `numeric`,
+			input:   "SELECT NUMERIC '0';",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `numeric`,
+			input:   "SELECT NUMERIC '123456';",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `numeric`,
+			input:   "SELECT NUMERIC '-3.14';",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `numeric`,
+			input:   "SELECT NUMERIC '-0.54321';",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `numeric`,
+			input:   "SELECT NUMERIC '1.23456e05';",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `numeric`,
+			input:   "SELECT NUMERIC '-9.876e-3';",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+	}
+
+	for _, testcase := range testcases {
+		testTokenize(t, testcase)
+	}
+}
+
+func TestTokenize_FloatLiteral(t *testing.T) {
+	// https://cloud.google.com/spanner/docs/reference/standard-sql/lexical#floating_point_literals
+	testcases := []testcaseTokenize{
+		{
+			message: `float`,
+			input:   "123.456e-67",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralFloat,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `float`,
+			input:   ".1E4",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralFloat,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `float`,
+			input:   "58.",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralFloat,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `float`,
+			input:   "4e2",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenLiteralFloat,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+	}
+
+	for _, testcase := range testcases {
+		testTokenize(t, testcase)
+	}
+}
+
+func TestTokenize_ArrayLiteral(t *testing.T) {
+	// https://cloud.google.com/spanner/docs/reference/standard-sql/lexical#array_literals
+	testcases := []testcaseTokenize{
+		{
+			message: `array of integers`,
+			input:   "[1, 2, 3]",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenSpecialChar,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `array of strings`,
+			input:   "['x', 'y', 'xy']",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenSpecialChar,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `array of integers`,
+			input:   "ARRAY[1, 2, 3]",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `array of strings`,
+			input:   "ARRAY<string>['x', 'y', 'xy']",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `array of integers`,
+			input:   "ARRAY<int64>[]",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+	}
+
+	for _, testcase := range testcases {
+		testTokenize(t, testcase)
+	}
+}
+
+func TestTokenize_Struct(t *testing.T) {
+	// https://cloud.google.com/spanner/docs/reference/standard-sql/lexical#struct_literals
+	testcases := []testcaseTokenize{
+		{
+			message: `struct value`,
+			input:   "(1, 2, 3)",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenSpecialChar,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `struct value`,
+			input:   "(1, 'abc')",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenSpecialChar,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `struct value`,
+			input:   "STRUCT(1 AS foo, 'abc' AS bar)",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `struct value`,
+			input:   "STRUCT<INT64, STRING>(1, 'abc')",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `struct value`,
+			input:   "STRUCT(1)",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `struct value`,
+			input:   "STRUCT<INT64>(1)",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `struct type`,
+			input:   "STRUCT<INT64, INT64, INT64>",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `struct type`,
+			input:   "STRUCT<foo INT64, bar STRING>",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+	}
+
+	for _, testcase := range testcases {
+		testTokenize(t, testcase)
+	}
+}
+
+func TestTokenize_Date_Timestamp_JSON(t *testing.T) {
+	testcases := []testcaseTokenize{
+		// https://cloud.google.com/spanner/docs/reference/standard-sql/lexical#date_literals
+		{
+			message: `date`,
+			input:   "DATE '2014-09-27'",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `statement using date`,
+			input:   "SELECT * FROM foo WHERE date_col = \"2014-09-27\"",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		// https://cloud.google.com/spanner/docs/reference/standard-sql/lexical#timestamp_literals
+		{
+			message: `timestamp`,
+			input:   "TIMESTAMP '2014-09-27 12:30:00.45-08'",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `statement using timestamp`,
+			input:   "SELECT * FROM foo\nWHERE timestamp_col = \"2014-09-27 12:30:00.45 America/Los_Angeles\"",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		// https://cloud.google.com/spanner/docs/reference/standard-sql/lexical#json_literals
+		{
+			message: `JSON`,
+			input:   "JSON '\n{\n  \"id\": 10,\n  \"type\": \"fruit\",\n  \"name\": \"apple\",\n  \"on_menu\": true,\n  \"recipes\":\n    {\n      \"salads\":\n      [\n        { \"id\": 2001, \"type\": \"Walnut Apple Salad\" },\n        { \"id\": 2002, \"type\": \"Apple Spinach Salad\" }\n      ],\n      \"desserts\":\n      [\n        { \"id\": 3001, \"type\": \"Apple Pie\" },\n        { \"id\": 3002, \"type\": \"Apple Scones\" },\n        { \"id\": 3003, \"type\": \"Apple Crumble\" }\n      ]\n    }\n}\n'",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+	}
+
+	for _, testcase := range testcases {
+		testTokenize(t, testcase)
+	}
+}
+
+func TestTokenize_Parameter(t *testing.T) {
+	// https://cloud.google.com/spanner/docs/reference/standard-sql/lexical#named_query_parameters
+	testcases := []testcaseTokenize{
+		{
+			message: `parameter`,
+			input:   "SELECT * FROM Roster WHERE LastName = @myparam",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenIdentifier,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+	}
+
+	for _, testcase := range testcases {
+		testTokenize(t, testcase)
+	}
+}
+
+func TestTokenize_Hint(t *testing.T) {
+	// https://cloud.google.com/spanner/docs/reference/standard-sql/lexical#hints
+	testcases := []testcaseTokenize{
+		{
+			message: `hint`,
+			input:   "@{ database_engine_a.file_count=23, database_engine_b.file_count=10 }",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenLiteralInteger,
+				tokenize.TokenSpace,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+	}
+
+	for _, testcase := range testcases {
+		testTokenize(t, testcase)
+	}
+}
+
+func TestTokenize_Comment(t *testing.T) {
+	// https://cloud.google.com/spanner/docs/reference/standard-sql/lexical#comments
+	testcases := []testcaseTokenize{
+		{
+			message: `single line comment with #`,
+			input:   "# this is a single-line comment\nSELECT book FROM library;",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenComment,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `single line comment with --`,
+			input:   "-- this is a single-line comment\nSELECT book FROM library;",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenComment,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `single line comment with /* and */`,
+			input:   "/* this is a single-line comment */\nSELECT book FROM library;",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenComment,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `single line comment with /* and */`,
+			input:   "SELECT book FROM library\n/* this is a single-line comment */\nWHERE book = \"Ulysses\";",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenComment,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `inline comment with #`,
+			input:   "SELECT book FROM library; # this is an inline comment",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenComment,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `inline comment with --`,
+			input:   "SELECT book FROM library; -- this is an inline comment",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenComment,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `inline comment with /* and */`,
+			input:   "SELECT book FROM library; /* this is an inline comment */",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenComment,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `inline comment with /* and */`,
+			input:   "SELECT book FROM library /* this is an inline comment */ WHERE book = \"Ulysses\";",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenComment,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `multiline comment with /* and */`,
+			input:   "SELECT book FROM library\n/*\n  This is a multiline comment\n  on multiple lines\n*/\nWHERE book = \"Ulysses\";",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenComment,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenEOF,
+			},
+			shouldErr: false,
+		},
+		{
+			message: `multiline comment with /* and */`,
+			input:   "SELECT book FROM library\n/* this is a multiline comment\non two lines */\nWHERE book = \"Ulysses\";",
+			wantTokens: []tokenize.TokenCode{
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenComment,
+				tokenize.TokenSpace,
+				tokenize.TokenKeyword,
+				tokenize.TokenSpace,
+				tokenize.TokenIdentifier,
+				tokenize.TokenSpace,
+				tokenize.TokenSpecialChar,
+				tokenize.TokenSpace,
+				tokenize.TokenLiteralQuoted,
+				tokenize.TokenSpecialChar,
 				tokenize.TokenEOF,
 			},
 			shouldErr: false,

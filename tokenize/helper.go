@@ -116,11 +116,6 @@ var keywords = map[string]bool{
 	"WINDOW":               true,
 	"WITH":                 true,
 	"WITHIN":               true,
-
-	"NUMERIC":   true,
-	"DATE":      true,
-	"TIMESTAMP": true,
-	"JSON":      true,
 }
 
 func isKeyword(r []rune) bool {
