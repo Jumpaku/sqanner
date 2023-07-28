@@ -5,63 +5,58 @@ import (
 	"github.com/Jumpaku/go-assert"
 	"github.com/Jumpaku/sqanner/parse"
 	"github.com/Jumpaku/sqanner/parse/node"
-	"github.com/Jumpaku/sqanner/tokenize"
-	"strconv"
-	"strings"
 )
 
 func ParseType(s *parse.ParseState) (node.TypeNode, error) {
-	begin := s.Cursor
-	s.Down()
-	defer s.Up()
+	parse.Stack(s)
 
 	s.SkipSpaces()
 	switch {
 	default:
-		return nil, fmt.Errorf(`invalid type`)
-	case s.Expect(isIdentifier(`BOOL`)):
-		return node.BoolType(begin, s.Next()), nil
-	case s.Expect(isIdentifier(`DATE`)):
-		return node.DateType(begin, s.Next()), nil
-	case s.Expect(isIdentifier(`JSON`)):
-		return node.JSONType(begin, s.Next()), nil
-	case s.Expect(isIdentifier(`INT64`)):
-		return node.Int64Type(begin, s.Next()), nil
-	case s.Expect(isIdentifier(`NUMERIC`)):
-		return node.NumericType(begin, s.Next()), nil
-	case s.Expect(isIdentifier(`FLOAT64`)):
-		return node.Float64Type(begin, s.Next()), nil
-	case s.Expect(isIdentifier(`TIMESTAMP`)):
-		return node.TimestampType(begin, s.Next()), nil
-	case s.Expect(isKeyword(`Array`)):
+		return nil, parse.WrapError(s, fmt.Errorf(`invalid type: valid type identifier not found`))
+	case s.ExpectNext(isIdentifier(`BOOL`)):
+		return parse.Accept(s, node.BoolType()), nil
+	case s.ExpectNext(isIdentifier(`DATE`)):
+		return parse.Accept(s, node.DateType()), nil
+	case s.ExpectNext(isIdentifier(`JSON`)):
+		return parse.Accept(s, node.JSONType()), nil
+	case s.ExpectNext(isIdentifier(`INT64`)):
+		return parse.Accept(s, node.Int64Type()), nil
+	case s.ExpectNext(isIdentifier(`NUMERIC`)):
+		return parse.Accept(s, node.NumericType()), nil
+	case s.ExpectNext(isIdentifier(`FLOAT64`)):
+		return parse.Accept(s, node.Float64Type()), nil
+	case s.ExpectNext(isIdentifier(`TIMESTAMP`)):
+		return parse.Accept(s, node.TimestampType()), nil
+	case s.ExpectNext(isKeyword(`Array`)):
 		s.Next()
 
 		s.SkipSpaces()
-		if !s.Expect(isSpecial('<')) {
-			return nil, fmt.Errorf(`invalid type parameter: '<' not found`)
+		if !s.ExpectNext(isSpecial('<')) {
+			return nil, parse.WrapError(s, fmt.Errorf(`invalid type: invalid array element type: '<' not found`))
 		}
 		s.Next()
 
 		s.SkipSpaces()
 		element, err := ParseType(s)
 		if err != nil {
-			return nil, fmt.Errorf(`invalid type parameter: %w`, err)
+			return nil, parse.WrapError(s, fmt.Errorf(`invalid type: invalid array element type: %w`, err))
 		}
 
 		s.SkipSpaces()
-		if !s.Expect(isSpecial('>')) {
-			return nil, fmt.Errorf(`invalid type parameter: '>' not found`)
+		if !s.ExpectNext(isSpecial('>')) {
+			return nil, parse.WrapError(s, fmt.Errorf(`invalid type: invalid array element type: '>' not found`))
 		}
 		s.Next()
 
-		return node.ArrayType(begin, s.Input[begin:s.Cursor], element), nil
+		return parse.Accept(s, node.ArrayType(element)), nil
 
-	case s.Expect(isKeyword(`STRUCT`)):
+	case s.ExpectNext(isKeyword(`STRUCT`)):
 		s.Next()
 
 		s.SkipSpaces()
-		if !s.Expect(isSpecial('<')) {
-			return nil, fmt.Errorf(`invalid type parameter: '<' not found`)
+		if !s.ExpectNext(isSpecial('<')) {
+			return nil, parse.WrapError(s, fmt.Errorf(`invalid type: invalid struct field: '<' not found`))
 		}
 		s.Next()
 
@@ -70,40 +65,40 @@ func ParseType(s *parse.ParseState) (node.TypeNode, error) {
 			s.SkipSpaces()
 			field, err := ParseStructField(s)
 			if err != nil {
-				return nil, fmt.Errorf(`invalid struct field: %w`, err)
+				return nil, parse.WrapError(s, fmt.Errorf(`invalid type: invalid struct field: %w`, err))
 			}
 			fields = append(fields, field)
 
 			s.SkipSpaces()
 			switch {
 			default:
-				return nil, fmt.Errorf(`invalid type parameter: ',' or '>' not found`)
-			case s.Expect(isSpecial(',')):
+				return nil, parse.WrapError(s, fmt.Errorf(`invalid type: invalid struct field: ',' or '>' not found`))
+			case s.ExpectNext(isSpecial(',')):
 				s.Next()
-			case s.Expect(isSpecial('>')):
+			case s.ExpectNext(isSpecial('>')):
 				s.Next()
-				return node.StructType(begin, s.Input[begin:s.Cursor], fields), nil
+				return parse.Accept(s, node.StructType(fields)), nil
 			}
 		}
 
-	case s.Expect(isIdentifier(`BYTES`)), s.Expect(isIdentifier(`STRING`)):
+	case s.ExpectNext(isIdentifier(`BYTES`)), s.ExpectNext(isIdentifier(`STRING`)):
 		t := s.Next()
 
 		s.SkipSpaces()
-		if !s.Expect(isSpecial('(')) {
-			return nil, fmt.Errorf(`invalid type parameter: '(' not found`)
+		if !s.ExpectNext(isSpecial('(')) {
+			return nil, parse.WrapError(s, fmt.Errorf(`invalid type: invalid size: '(' not found`))
 		}
 		s.Next()
 
 		s.SkipSpaces()
 		size, err := ParseTypeSize(s)
 		if err != nil {
-			return nil, fmt.Errorf(`invalid size: %w`, err)
+			return nil, parse.WrapError(s, fmt.Errorf(`invalid type: invalid size: %w`, err))
 		}
 
 		s.SkipSpaces()
-		if !s.Expect(isSpecial('>')) {
-			return nil, fmt.Errorf(`invalid type parameter: '>' not found`)
+		if !s.ExpectNext(isSpecial(')')) {
+			return nil, parse.WrapError(s, fmt.Errorf(`invalid type: invalid size: ')' not found`))
 		}
 		s.Next()
 
@@ -111,56 +106,9 @@ func ParseType(s *parse.ParseState) (node.TypeNode, error) {
 		default:
 			return assert.Unexpected2[node.TypeNode, error](``)
 		case isIdentifier(`BYTES`)(t):
-			return node.BytesType(begin, s.Input[begin:s.Cursor], size), nil
+			return parse.Accept(s, node.BytesType(size)), nil
 		case isIdentifier(`STRING`)(t):
-			return node.StringType(begin, s.Input[begin:s.Cursor], size), nil
+			return parse.Accept(s, node.StringType(size)), nil
 		}
-	}
-}
-
-func ParseStructField(s *parse.ParseState) (node.StructTypeFieldNode, error) {
-	begin := s.Cursor
-	s.Down()
-	defer s.Up()
-
-	var fieldName node.IdentifierNode
-
-	s.SkipSpaces()
-	if s.Expect(isKind(tokenize.TokenIdentifier)) || s.Expect(isKind(tokenize.TokenIdentifierQuoted)) {
-		var err error
-		fieldName, err = ParseIdentifier(s)
-		if err != nil {
-			return nil, fmt.Errorf(`invalid field name: %w`, err)
-		}
-	}
-
-	s.SkipSpaces()
-	fieldType, err := ParseType(s)
-	if err != nil {
-		return nil, fmt.Errorf(`invalid field type: %w`, err)
-	}
-
-	return node.StructTypeField(begin, s.Input[begin:s.Cursor], fieldName, fieldType), nil
-}
-
-func ParseTypeSize(s *parse.ParseState) (node.TypeSizeNode, error) {
-	begin := s.Cursor
-	s.Down()
-	defer s.Up()
-
-	s.SkipSpaces()
-	switch {
-	default:
-		return nil, fmt.Errorf(`invalid type parameter: integer literal or 'MAX' not found`)
-	case s.Expect(isKeyword("MAX")):
-		return node.TypeSizeMax(begin, s.Next()), nil
-	case s.Expect(isKind(tokenize.TokenLiteralInteger)):
-		t := s.Next()
-		size, err := strconv.ParseInt(strings.ToLower(string(t.Content)), 0, 64)
-		if err != nil {
-			return nil, fmt.Errorf(`invalid type size: %w`, err)
-		}
-
-		return node.TypeSize(begin, t, int(size)), nil
 	}
 }

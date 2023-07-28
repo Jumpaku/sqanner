@@ -9,9 +9,6 @@ const (
 	NodeIdentifier
 
 	NodeType
-	NodeTypeArray
-	NodeTypeScalar
 	NodeTypeSize
-	NodeTypeStruct
-	NodeTypeStructField
+	NodeStructField
 )

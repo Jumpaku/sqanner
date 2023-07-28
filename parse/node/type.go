@@ -25,132 +25,115 @@ type TypeNode interface {
 	Node
 	TypeCode() TypeCode
 	IsScalar() bool
-	HasSize() bool
-	Size() TypeSizeNode
-	IsArray() bool
-	IsStruct() bool
 	ScalarName() string
-	ArrayElementType() TypeNode
+	ScalarHasSize() bool
+	ScalarSize() TypeSizeNode
+	IsArray() bool
+	ArrayElement() TypeNode
+	IsStruct() bool
 	StructFields() []StructTypeFieldNode
 }
 
-type TypeSizeNode interface {
-	TerminalNode
-	Max() bool
-	Size() int
-}
-
-type StructTypeFieldNode interface {
-	Node
-	Name() IdentifierNode
-	Type() TypeNode
-}
-type StructTypeNode interface {
-	Node
-	Fields() []StructTypeFieldNode
-}
-
-func TypeSize(begin int, token tokenize.Token, size int) TypeSizeNode {
-
-	return typeSize{
-		nodeBase: nodeBase{kind: NodeTypeSize, begin: begin, tokens: []tokenize.Token{token}},
-		size:     size,
+func ArrayType(element TypeNode) nodeFunc[TypeNode] {
+	return func(begin int, tokens []tokenize.Token) TypeNode {
+		return anyType{
+			nodeBase:     nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			code:         TypeArray,
+			arrayElement: element,
+		}
 	}
 }
 
-func TypeSizeMax(begin int, token tokenize.Token) TypeSizeNode {
-	return typeSize{
-		nodeBase: nodeBase{kind: NodeTypeSize, begin: begin, tokens: []tokenize.Token{token}},
-		max:      true,
+func StructType(fields []StructTypeFieldNode) nodeFunc[TypeNode] {
+	return func(begin int, tokens []tokenize.Token) TypeNode {
+		return anyType{
+			nodeBase:     nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			code:         TypeStruct,
+			structFields: fields,
+		}
 	}
 }
 
-func ArrayType(begin int, tokens []tokenize.Token, element TypeNode) TypeNode {
-	return anyType{
-		nodeBase:     nodeBase{kind: NodeTypeArray, begin: begin, tokens: tokens},
-		code:         TypeArray,
-		arrayElement: element,
+func BoolType() nodeFunc[TypeNode] {
+	return func(begin int, tokens []tokenize.Token) TypeNode {
+		return anyType{
+			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			code:     TypeBool,
+		}
 	}
 }
 
-func BoolType(begin int, token tokenize.Token) TypeNode {
-	return anyType{
-		nodeBase: nodeBase{kind: NodeTypeScalar, begin: begin, tokens: []tokenize.Token{token}},
-		code:     TypeBool,
+func BytesType(size TypeSizeNode) nodeFunc[TypeNode] {
+	return func(begin int, tokens []tokenize.Token) TypeNode {
+		return anyType{
+			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			code:     TypeBytes,
+			size:     size,
+		}
 	}
 }
 
-func BytesType(begin int, tokens []tokenize.Token, size TypeSizeNode) TypeNode {
-	return anyType{
-		nodeBase: nodeBase{kind: NodeTypeScalar, begin: begin, tokens: tokens},
-		code:     TypeBytes,
-		size:     size,
+func DateType() nodeFunc[TypeNode] {
+	return func(begin int, tokens []tokenize.Token) TypeNode {
+		return anyType{
+			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			code:     TypeDate,
+		}
 	}
 }
 
-func DateType(begin int, token tokenize.Token) TypeNode {
-	return anyType{
-		nodeBase: nodeBase{kind: NodeTypeScalar, begin: begin, tokens: []tokenize.Token{token}},
-		code:     TypeDate,
+func JSONType() nodeFunc[TypeNode] {
+	return func(begin int, tokens []tokenize.Token) TypeNode {
+		return anyType{
+			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			code:     TypeJSON,
+		}
 	}
 }
 
-func JSONType(begin int, token tokenize.Token) TypeNode {
-	return anyType{
-		nodeBase: nodeBase{kind: NodeTypeScalar, begin: begin, tokens: []tokenize.Token{token}},
-		code:     TypeJSON,
+func Int64Type() nodeFunc[TypeNode] {
+	return func(begin int, tokens []tokenize.Token) TypeNode {
+		return anyType{
+			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			code:     TypeInt64,
+		}
 	}
 }
 
-func Int64Type(begin int, token tokenize.Token) TypeNode {
-	return anyType{
-		nodeBase: nodeBase{kind: NodeTypeScalar, begin: begin, tokens: []tokenize.Token{token}},
-		code:     TypeInt64,
+func NumericType() nodeFunc[TypeNode] {
+	return func(begin int, tokens []tokenize.Token) TypeNode {
+		return anyType{
+			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			code:     TypeNumeric,
+		}
 	}
 }
 
-func NumericType(begin int, token tokenize.Token) TypeNode {
-	return anyType{
-		nodeBase: nodeBase{kind: NodeTypeScalar, begin: begin, tokens: []tokenize.Token{token}},
-		code:     TypeNumeric,
+func Float64Type() nodeFunc[TypeNode] {
+	return func(begin int, tokens []tokenize.Token) TypeNode {
+		return anyType{
+			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			code:     TypeFloat64,
+		}
 	}
 }
 
-func Float64Type(begin int, token tokenize.Token) TypeNode {
-	return anyType{
-		nodeBase: nodeBase{kind: NodeTypeScalar, begin: begin, tokens: []tokenize.Token{token}},
-		code:     TypeFloat64,
+func StringType(size TypeSizeNode) nodeFunc[TypeNode] {
+	return func(begin int, tokens []tokenize.Token) TypeNode {
+		return anyType{
+			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			code:     TypeString,
+			size:     size,
+		}
 	}
 }
 
-func StringType(begin int, tokens []tokenize.Token, size TypeSizeNode) TypeNode {
-	return anyType{
-		nodeBase: nodeBase{kind: NodeTypeScalar, begin: begin, tokens: tokens},
-		code:     TypeString,
-		size:     size,
-	}
-}
-
-func StructType(begin int, tokens []tokenize.Token, fields []StructTypeFieldNode) TypeNode {
-	return anyType{
-		nodeBase:     nodeBase{kind: NodeTypeStruct, begin: begin, tokens: tokens},
-		code:         TypeStruct,
-		structFields: fields,
-	}
-}
-
-func TimestampType(begin int, token tokenize.Token) TypeNode {
-	return anyType{
-		nodeBase: nodeBase{kind: NodeTypeScalar, begin: begin, tokens: []tokenize.Token{token}},
-		code:     TypeTimestamp,
-	}
-}
-
-func StructTypeField(begin int, tokens []tokenize.Token, fieldName IdentifierNode, fieldType TypeNode) StructTypeFieldNode {
-	return structTypeField{
-		nodeBase:  nodeBase{kind: NodeTypeStructField, begin: begin, tokens: tokens},
-		fieldName: fieldName,
-		fieldType: fieldType,
+func TimestampType() nodeFunc[TypeNode] {
+	return func(begin int, tokens []tokenize.Token) TypeNode {
+		return anyType{
+			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			code:     TypeTimestamp,
+		}
 	}
 }
 
@@ -166,11 +149,11 @@ func (n anyType) IsScalar() bool {
 	return n.code != TypeArray && n.code != TypeStruct
 }
 
-func (n anyType) HasSize() bool {
+func (n anyType) ScalarHasSize() bool {
 	return n.code == TypeBytes || n.code == TypeString
 }
 
-func (n anyType) Size() TypeSizeNode {
+func (n anyType) ScalarSize() TypeSizeNode {
 	return n.size
 }
 
@@ -207,7 +190,7 @@ func (n anyType) ScalarName() string {
 	}
 }
 
-func (n anyType) ArrayElementType() TypeNode {
+func (n anyType) ArrayElement() TypeNode {
 	return n.arrayElement
 }
 
@@ -221,32 +204,14 @@ func (n anyType) TypeCode() TypeCode {
 	return n.code
 }
 
-type typeSize struct {
-	nodeBase
-	size int
-	max  bool
-}
-
-func (n typeSize) Token() tokenize.Token {
-	return n.Tokens()[0]
-}
-
-func (n typeSize) Max() bool {
-	return n.max
-}
-
-func (n typeSize) Size() int {
-	return n.size
-}
-
-var _ TypeSizeNode = typeSize{}
-
 type scalarType struct {
 	nodeBase
 	name string
 	size int
 	max  bool
 }
+
+var _ Node = scalarType{}
 
 func (n scalarType) Max() bool {
 	return n.max
@@ -258,40 +223,4 @@ func (n scalarType) Size() int {
 
 func (n scalarType) Name() string {
 	return n.name
-}
-
-func (n scalarType) Token() tokenize.Token {
-	return n.tokens[0]
-}
-
-var _ Node = scalarType{}
-var _ TerminalNode = scalarType{}
-
-type structType struct {
-	nodeBase
-	fields []StructTypeFieldNode
-}
-
-var _ Node = structType{}
-var _ StructTypeNode = structType{}
-
-func (n structType) Fields() []StructTypeFieldNode {
-	return n.fields
-}
-
-type structTypeField struct {
-	nodeBase
-	fieldName IdentifierNode
-	fieldType TypeNode
-}
-
-var _ Node = structTypeField{}
-var _ StructTypeFieldNode = structTypeField{}
-
-func (n structTypeField) Name() IdentifierNode {
-	return n.fieldName
-}
-
-func (n structTypeField) Type() TypeNode {
-	return n.fieldType
 }

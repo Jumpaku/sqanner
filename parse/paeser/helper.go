@@ -2,12 +2,13 @@ package paeser
 
 import (
 	"github.com/Jumpaku/sqanner/tokenize"
+	"golang.org/x/exp/slices"
 	"strings"
 )
 
-func isKind(k tokenize.TokenKind) func(t tokenize.Token) bool {
+func isAnyKind(k ...tokenize.TokenKind) func(t tokenize.Token) bool {
 	return func(t tokenize.Token) bool {
-		return t.Kind == k
+		return slices.Contains(k, t.Kind)
 	}
 }
 func isSpecial(r rune) func(t tokenize.Token) bool {
@@ -16,9 +17,9 @@ func isSpecial(r rune) func(t tokenize.Token) bool {
 	}
 }
 
-func isKeyword(pattern string) func(t tokenize.Token) bool {
+func isKeyword(keyword string) func(t tokenize.Token) bool {
 	return func(t tokenize.Token) bool {
-		return t.Kind == tokenize.TokenKeyword && strings.ToLower(pattern) == strings.ToLower(string(t.Content))
+		return t.Kind == tokenize.TokenKeyword && strings.ToLower(keyword) == strings.ToLower(string(t.Content))
 	}
 }
 

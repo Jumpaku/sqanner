@@ -2,16 +2,13 @@ package node
 
 import "github.com/Jumpaku/sqanner/tokenize"
 
+type nodeFunc[T Node] func(begin int, tokens []tokenize.Token) T
+
 type Node interface {
 	Kind() NodeKind
 	Begin() int
 	End() int
 	Tokens() []tokenize.Token
-}
-
-type TerminalNode interface {
-	Node
-	Token() tokenize.Token
 }
 
 type nodeBase struct {

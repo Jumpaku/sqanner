@@ -8,16 +8,12 @@ import (
 )
 
 func ParsePath(s *parse.ParseState) (node.PathNode, error) {
-	begin := s.Cursor
-	s.Down()
-	defer s.Up()
-	s.SkipSpaces()
-
 	var ch []node.IdentifierNode
 
+	s.SkipSpaces()
 	n, err := ParseIdentifier(s)
 	if err != nil {
-		return nil, err
+		return nil, parse.WrapError(s, fmt.Errorf(`invalid path: first identifier not found`))
 	}
 	ch = append(ch, n)
 
@@ -28,32 +24,15 @@ func ParsePath(s *parse.ParseState) (node.PathNode, error) {
 	for {
 		switch {
 		default:
-			return node.Path(begin, s.Input[begin:s.Cursor], ch), nil
-		case s.Expect(isSeparator):
+			return parse.Accept(s, node.Path(ch)), nil
+		case s.ExpectNext(isSeparator):
 			s.Next()
 
 			n, err := ParseIdentifier(s)
 			if err != nil {
-				return nil, err
+				return nil, parse.WrapError(s, fmt.Errorf(`invalid path: identifier not found after '.'`))
 			}
 			ch = append(ch, n)
 		}
 	}
-}
-
-func ParseIdentifier(s *parse.ParseState) (node.IdentifierNode, error) {
-	begin := s.Cursor
-	s.Down()
-	defer s.Up()
-	s.SkipSpaces()
-
-	isIdentifier := func(t tokenize.Token) bool {
-		return t.Kind == tokenize.TokenIdentifier || t.Kind == tokenize.TokenIdentifierQuoted
-	}
-
-	if !s.Expect(isIdentifier) {
-		return nil, fmt.Errorf(`quoted or unquoted identifier is expected but not found`)
-	}
-
-	return node.Identifier(begin, s.Next()), nil
 }
