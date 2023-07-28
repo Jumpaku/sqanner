@@ -16,7 +16,7 @@ func isHexDigit(r rune) bool {
 func isLetter(r rune) bool {
 	return ('A' <= r && r <= 'Z') || ('a' <= r && r <= 'z') || (r == '_')
 }
-func isDecimalDigit(r rune) bool {
+func IsDecimalDigit(r rune) bool {
 	return '0' <= r && r <= '9'
 }
 
@@ -118,7 +118,7 @@ var keywords = map[string]bool{
 	"WITHIN":               true,
 }
 
-func isKeyword(r []rune) bool {
+func IsKeyword(r []rune) bool {
 	return keywords[strings.ToUpper(string(r))]
 }
 
