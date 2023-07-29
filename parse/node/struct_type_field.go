@@ -11,7 +11,7 @@ type StructTypeFieldNode interface {
 func StructTypeField(fieldName IdentifierNode, fieldType TypeNode) nodeFunc[StructTypeFieldNode] {
 	return func(begin int, tokens []tokenize.Token) StructTypeFieldNode {
 		return structTypeField{
-			nodeBase:  nodeBase{kind: NodeStructField, begin: begin, tokens: tokens},
+			nodeBase:  nodeBase{kind: NodeStructTypeField, begin: begin, tokens: tokens},
 			fieldName: fieldName,
 			fieldType: fieldType,
 		}
@@ -26,6 +26,10 @@ type structTypeField struct {
 
 var _ Node = structTypeField{}
 var _ StructTypeFieldNode = structTypeField{}
+
+func (n structTypeField) Children() []Node {
+	return []Node{n.fieldName, n.fieldType}
+}
 
 func (n structTypeField) Name() IdentifierNode {
 	return n.fieldName

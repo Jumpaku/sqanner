@@ -145,6 +145,25 @@ type anyType struct {
 	structFields []StructTypeFieldNode
 }
 
+var _ TypeNode = anyType{}
+
+func (n anyType) Children() []Node {
+	switch n.TypeCode() {
+	default:
+		return nil
+	case TypeBytes, TypeString:
+		return []Node{n.size}
+	case TypeArray:
+		return []Node{n.arrayElement}
+	case TypeStruct:
+		ch := []Node{}
+		for _, structField := range n.structFields {
+			ch = append(ch, structField)
+		}
+		return ch
+	}
+}
+
 func (n anyType) IsScalar() bool {
 	return n.code != TypeArray && n.code != TypeStruct
 }
@@ -198,29 +217,6 @@ func (n anyType) StructFields() []StructTypeFieldNode {
 	return n.structFields
 }
 
-var _ TypeNode = anyType{}
-
 func (n anyType) TypeCode() TypeCode {
 	return n.code
-}
-
-type scalarType struct {
-	nodeBase
-	name string
-	size int
-	max  bool
-}
-
-var _ Node = scalarType{}
-
-func (n scalarType) Max() bool {
-	return n.max
-}
-
-func (n scalarType) Size() int {
-	return n.size
-}
-
-func (n scalarType) Name() string {
-	return n.name
 }

@@ -2,25 +2,33 @@ package stack
 
 type Stack[T any] struct {
 	data []T
-	top  int
+	len  int
 }
 
-func (s *Stack[T]) Top() T {
-	return s.data[s.top]
+func New[T any]() *Stack[T] {
+	return &Stack[T]{}
+}
+
+func (s *Stack[T]) Peek() T {
+	return s.data[s.len-1]
 }
 
 func (s *Stack[T]) Push(e T) *Stack[T] {
-	if len(s.data) == s.top {
+	if len(s.data) == s.len {
 		s.data = append(s.data, e)
 	} else {
-		s.data[s.top] = e
+		s.data[s.len] = e
 	}
-	s.top++
+	s.len++
 
 	return s
 }
 
 func (s *Stack[T]) Pop() T {
-	s.top--
-	return s.data[s.top+1]
+	s.len--
+	return s.data[s.len]
+}
+
+func (s *Stack[T]) Len() int {
+	return s.len
 }

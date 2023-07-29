@@ -9,6 +9,7 @@ type Node interface {
 	Begin() int
 	End() int
 	Tokens() []tokenize.Token
+	Children() []Node
 }
 
 type nodeBase struct {
@@ -16,8 +17,6 @@ type nodeBase struct {
 	begin  int
 	kind   NodeKind
 }
-
-var _ Node = nodeBase{}
 
 func (n nodeBase) Kind() NodeKind {
 	return n.kind

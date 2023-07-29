@@ -26,6 +26,14 @@ type path struct {
 var _ Node = path{}
 var _ PathNode = path{}
 
+func (n path) Children() []Node {
+	ch := []Node{}
+	for _, identifier := range n.identifiers {
+		ch = append(ch, identifier)
+	}
+	return ch
+}
+
 func (n path) Identifiers() []IdentifierNode {
 	return n.identifiers
 }

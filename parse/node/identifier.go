@@ -29,6 +29,10 @@ var (
 	_ IdentifierNode = identifier{}
 )
 
+func (n identifier) Children() []Node {
+	return nil
+}
+
 func (n identifier) Value() string {
 	return string(n.Tokens()[0].Content)
 }

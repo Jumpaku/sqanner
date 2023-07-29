@@ -34,6 +34,10 @@ type typeSize struct {
 
 var _ TypeSizeNode = typeSize{}
 
+func (n typeSize) Children() []Node {
+	return nil
+}
+
 func (n typeSize) Max() bool {
 	return n.max
 }
