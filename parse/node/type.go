@@ -34,7 +34,7 @@ type TypeNode interface {
 	StructFields() []StructTypeFieldNode
 }
 
-func ArrayType(element TypeNode) nodeFunc[TypeNode] {
+func ArrayType(element TypeNode) NewNodeFunc[TypeNode] {
 	return func(begin int, tokens []tokenize.Token) TypeNode {
 		return anyType{
 			nodeBase:     nodeBase{kind: NodeType, begin: begin, tokens: tokens},
@@ -44,7 +44,7 @@ func ArrayType(element TypeNode) nodeFunc[TypeNode] {
 	}
 }
 
-func StructType(fields []StructTypeFieldNode) nodeFunc[TypeNode] {
+func StructType(fields []StructTypeFieldNode) NewNodeFunc[TypeNode] {
 	return func(begin int, tokens []tokenize.Token) TypeNode {
 		return anyType{
 			nodeBase:     nodeBase{kind: NodeType, begin: begin, tokens: tokens},
@@ -54,7 +54,7 @@ func StructType(fields []StructTypeFieldNode) nodeFunc[TypeNode] {
 	}
 }
 
-func BoolType() nodeFunc[TypeNode] {
+func BoolType() NewNodeFunc[TypeNode] {
 	return func(begin int, tokens []tokenize.Token) TypeNode {
 		return anyType{
 			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
@@ -63,7 +63,7 @@ func BoolType() nodeFunc[TypeNode] {
 	}
 }
 
-func BytesType(size TypeSizeNode) nodeFunc[TypeNode] {
+func BytesType(size TypeSizeNode) NewNodeFunc[TypeNode] {
 	return func(begin int, tokens []tokenize.Token) TypeNode {
 		return anyType{
 			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
@@ -73,7 +73,7 @@ func BytesType(size TypeSizeNode) nodeFunc[TypeNode] {
 	}
 }
 
-func DateType() nodeFunc[TypeNode] {
+func DateType() NewNodeFunc[TypeNode] {
 	return func(begin int, tokens []tokenize.Token) TypeNode {
 		return anyType{
 			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
@@ -82,7 +82,7 @@ func DateType() nodeFunc[TypeNode] {
 	}
 }
 
-func JSONType() nodeFunc[TypeNode] {
+func JSONType() NewNodeFunc[TypeNode] {
 	return func(begin int, tokens []tokenize.Token) TypeNode {
 		return anyType{
 			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
@@ -91,7 +91,7 @@ func JSONType() nodeFunc[TypeNode] {
 	}
 }
 
-func Int64Type() nodeFunc[TypeNode] {
+func Int64Type() NewNodeFunc[TypeNode] {
 	return func(begin int, tokens []tokenize.Token) TypeNode {
 		return anyType{
 			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
@@ -100,7 +100,7 @@ func Int64Type() nodeFunc[TypeNode] {
 	}
 }
 
-func NumericType() nodeFunc[TypeNode] {
+func NumericType() NewNodeFunc[TypeNode] {
 	return func(begin int, tokens []tokenize.Token) TypeNode {
 		return anyType{
 			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
@@ -109,7 +109,7 @@ func NumericType() nodeFunc[TypeNode] {
 	}
 }
 
-func Float64Type() nodeFunc[TypeNode] {
+func Float64Type() NewNodeFunc[TypeNode] {
 	return func(begin int, tokens []tokenize.Token) TypeNode {
 		return anyType{
 			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
@@ -118,7 +118,7 @@ func Float64Type() nodeFunc[TypeNode] {
 	}
 }
 
-func StringType(size TypeSizeNode) nodeFunc[TypeNode] {
+func StringType(size TypeSizeNode) NewNodeFunc[TypeNode] {
 	return func(begin int, tokens []tokenize.Token) TypeNode {
 		return anyType{
 			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
@@ -128,7 +128,7 @@ func StringType(size TypeSizeNode) nodeFunc[TypeNode] {
 	}
 }
 
-func TimestampType() nodeFunc[TypeNode] {
+func TimestampType() NewNodeFunc[TypeNode] {
 	return func(begin int, tokens []tokenize.Token) TypeNode {
 		return anyType{
 			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
@@ -156,11 +156,11 @@ func (n anyType) Children() []Node {
 	case TypeArray:
 		return []Node{n.arrayElement}
 	case TypeStruct:
-		ch := []Node{}
+		children := []Node{}
 		for _, structField := range n.structFields {
-			ch = append(ch, structField)
+			children = append(children, structField)
 		}
-		return ch
+		return children
 	}
 }
 

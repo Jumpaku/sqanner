@@ -1,19 +1,18 @@
-package paeser
+package parser
 
 import (
 	"fmt"
-	"github.com/Jumpaku/sqanner/parse"
 	"github.com/Jumpaku/sqanner/parse/node"
 	"github.com/Jumpaku/sqanner/tokenize"
 )
 
-func ParsePath(s *parse.ParseState) (node.PathNode, error) {
+func ParsePath(s *ParseState) (node.PathNode, error) {
 	var ch []node.IdentifierNode
 
 	s.SkipSpacesAndComments()
 	n, err := ParseIdentifier(s)
 	if err != nil {
-		return parse.WrapError[node.PathNode](s, fmt.Errorf(`first identifier not found`))
+		return Error[node.PathNode](s, fmt.Errorf(`first identifier not found`))
 	}
 	ch = append(ch, n)
 
@@ -24,13 +23,13 @@ func ParsePath(s *parse.ParseState) (node.PathNode, error) {
 	for {
 		switch {
 		default:
-			return parse.Accept(s, node.Path(ch))
+			return Accept(s, node.Path(ch))
 		case s.ExpectNext(isSeparator):
 			s.Next()
 
 			n, err := ParseIdentifier(s)
 			if err != nil {
-				return parse.WrapError[node.PathNode](s, fmt.Errorf(`identifier not found after '.'`))
+				return Error[node.PathNode](s, fmt.Errorf(`identifier not found after '.'`))
 			}
 			ch = append(ch, n)
 		}

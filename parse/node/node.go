@@ -2,7 +2,7 @@ package node
 
 import "github.com/Jumpaku/sqanner/tokenize"
 
-type nodeFunc[T Node] func(begin int, tokens []tokenize.Token) T
+type NewNodeFunc[T Node] func(begin int, tokens []tokenize.Token) T
 
 type Node interface {
 	Kind() NodeKind

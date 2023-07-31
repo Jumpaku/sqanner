@@ -1,9 +1,8 @@
-package parse
+package parser
 
 import (
 	"fmt"
 	"github.com/Jumpaku/sqanner/parse/node"
-	"github.com/Jumpaku/sqanner/parse/paeser"
 	"github.com/Jumpaku/sqanner/parse/stack"
 	"github.com/Jumpaku/sqanner/tokenize"
 )
@@ -21,7 +20,7 @@ func NewParseState(input []tokenize.Token) *ParseState {
 	}
 }
 
-func Stack(s *ParseState) {
+func Init(s *ParseState) {
 	s.begins.Push(s.Cursor)
 }
 
@@ -30,7 +29,7 @@ func Accept[T node.Node](s *ParseState, newNode func(int, []tokenize.Token) T) (
 	return newNode(head, s.input[head:s.Cursor]), nil
 }
 
-func WrapError[T node.Node](s *ParseState, err error) (T, error) {
+func Error[T node.Node](s *ParseState, err error) (T, error) {
 	t := s.peek()
 
 	begin := s.Cursor
@@ -49,7 +48,7 @@ func WrapError[T node.Node](s *ParseState, err error) (T, error) {
 	}
 
 	var n T
-	return n, fmt.Errorf(`fail to parse during processing tokens near ...%q...: line=%d, column=%d: %w`, contents, t.Line, t.Column, err)
+	return n, fmt.Errorf(`fail to parse during processing tokens near ...%v...: line=%d, column=%d: %w`, contents, t.Line, t.Column, err)
 }
 
 func (s *ParseState) ExpectNext(expect func(token tokenize.Token) bool) bool {
@@ -65,7 +64,7 @@ func (s *ParseState) Next() tokenize.Token {
 }
 
 func (s *ParseState) SkipSpacesAndComments() {
-	for s.ExpectNext(paeser.IsAnyKind(tokenize.TokenSpace, tokenize.TokenComment)) {
+	for s.ExpectNext(IsAnyKind(tokenize.TokenSpace, tokenize.TokenComment)) {
 		s.Next()
 	}
 }

@@ -1,14 +1,13 @@
-package paeser
+package parser
 
 import (
 	"fmt"
-	"github.com/Jumpaku/sqanner/parse"
 	"github.com/Jumpaku/sqanner/parse/node"
 	"github.com/Jumpaku/sqanner/tokenize"
 )
 
-func ParseStructField(s *parse.ParseState) (node.StructTypeFieldNode, error) {
-	parse.Stack(s)
+func ParseStructField(s *ParseState) (node.StructTypeFieldNode, error) {
+	Init(s)
 
 	var fieldName node.IdentifierNode
 
@@ -17,15 +16,15 @@ func ParseStructField(s *parse.ParseState) (node.StructTypeFieldNode, error) {
 		var err error
 		fieldName, err = ParseIdentifier(s)
 		if err != nil {
-			return parse.WrapError[node.StructTypeFieldNode](s, fmt.Errorf(`invalid field name: %w`, err))
+			return Error[node.StructTypeFieldNode](s, fmt.Errorf(`invalid field name: %w`, err))
 		}
 	}
 
 	s.SkipSpacesAndComments()
 	fieldType, err := ParseType(s)
 	if err != nil {
-		return parse.WrapError[node.StructTypeFieldNode](s, fmt.Errorf(`invalid field type: %w`, err))
+		return Error[node.StructTypeFieldNode](s, fmt.Errorf(`invalid field type: %w`, err))
 	}
 
-	return parse.Accept(s, node.StructTypeField(fieldName, fieldType))
+	return Accept(s, node.StructTypeField(fieldName, fieldType))
 }

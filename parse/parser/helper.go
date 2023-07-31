@@ -1,4 +1,4 @@
-package paeser
+package parser
 
 import (
 	"github.com/Jumpaku/sqanner/tokenize"

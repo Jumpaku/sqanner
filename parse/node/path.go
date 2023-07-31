@@ -9,7 +9,7 @@ type PathNode interface {
 	Identifiers() []IdentifierNode
 }
 
-func Path(identifiers []IdentifierNode) nodeFunc[PathNode] {
+func Path(identifiers []IdentifierNode) NewNodeFunc[PathNode] {
 	return func(head int, tokens []tokenize.Token) PathNode {
 		return path{
 			nodeBase:    nodeBase{kind: NodePath, begin: head, tokens: tokens},
@@ -27,11 +27,11 @@ var _ Node = path{}
 var _ PathNode = path{}
 
 func (n path) Children() []Node {
-	ch := []Node{}
+	children := []Node{}
 	for _, identifier := range n.identifiers {
-		ch = append(ch, identifier)
+		children = append(children, identifier)
 	}
-	return ch
+	return children
 }
 
 func (n path) Identifiers() []IdentifierNode {

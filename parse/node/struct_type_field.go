@@ -8,7 +8,7 @@ type StructTypeFieldNode interface {
 	Type() TypeNode
 }
 
-func StructTypeField(fieldName IdentifierNode, fieldType TypeNode) nodeFunc[StructTypeFieldNode] {
+func StructTypeField(fieldName IdentifierNode, fieldType TypeNode) NewNodeFunc[StructTypeFieldNode] {
 	return func(begin int, tokens []tokenize.Token) StructTypeFieldNode {
 		return structTypeField{
 			nodeBase:  nodeBase{kind: NodeStructTypeField, begin: begin, tokens: tokens},

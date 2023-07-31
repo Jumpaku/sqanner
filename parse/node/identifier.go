@@ -12,7 +12,7 @@ type IdentifierNode interface {
 	UnquotedValue() string
 }
 
-func Identifier() nodeFunc[IdentifierNode] {
+func Identifier() NewNodeFunc[IdentifierNode] {
 	return func(head int, tokens []tokenize.Token) IdentifierNode {
 		return identifier{
 			nodeBase{kind: NodeIdentifier, begin: head, tokens: tokens},
