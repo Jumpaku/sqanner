@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func isAnyKind(k ...tokenize.TokenKind) func(t tokenize.Token) bool {
+func IsAnyKind(k ...tokenize.TokenKind) func(t tokenize.Token) bool {
 	return func(t tokenize.Token) bool {
 		return slices.Contains(k, t.Kind)
 	}

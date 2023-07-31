@@ -10,10 +10,10 @@ import (
 func ParsePath(s *parse.ParseState) (node.PathNode, error) {
 	var ch []node.IdentifierNode
 
-	s.SkipSpaces()
+	s.SkipSpacesAndComments()
 	n, err := ParseIdentifier(s)
 	if err != nil {
-		return nil, parse.WrapError(s, fmt.Errorf(`invalid path: first identifier not found`))
+		return parse.WrapError[node.PathNode](s, fmt.Errorf(`first identifier not found`))
 	}
 	ch = append(ch, n)
 
@@ -24,13 +24,13 @@ func ParsePath(s *parse.ParseState) (node.PathNode, error) {
 	for {
 		switch {
 		default:
-			return parse.Accept(s, node.Path(ch)), nil
+			return parse.Accept(s, node.Path(ch))
 		case s.ExpectNext(isSeparator):
 			s.Next()
 
 			n, err := ParseIdentifier(s)
 			if err != nil {
-				return nil, parse.WrapError(s, fmt.Errorf(`invalid path: identifier not found after '.'`))
+				return parse.WrapError[node.PathNode](s, fmt.Errorf(`identifier not found after '.'`))
 			}
 			ch = append(ch, n)
 		}

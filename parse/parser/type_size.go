@@ -12,20 +12,20 @@ import (
 func ParseTypeSize(s *parse.ParseState) (node.TypeSizeNode, error) {
 	parse.Stack(s)
 
-	s.SkipSpaces()
+	s.SkipSpacesAndComments()
 	switch {
 	default:
-		return nil, parse.WrapError(s, parse.WrapError(s, fmt.Errorf(`invalid size: integer literal or 'MAX' not found`)))
+		return parse.WrapError[node.TypeSizeNode](s, fmt.Errorf(`integer literal or 'MAX' not found`))
 	case s.ExpectNext(isKeyword("MAX")):
-		return parse.Accept(s, node.TypeSizeMax()), nil
-	case s.ExpectNext(isAnyKind(tokenize.TokenLiteralInteger)):
+		return parse.Accept(s, node.TypeSizeMax())
+	case s.ExpectNext(IsAnyKind(tokenize.TokenLiteralInteger)):
 		t := s.Next()
 
 		size, err := strconv.ParseInt(strings.ToLower(string(t.Content)), 0, 64)
 		if err != nil {
-			return nil, parse.WrapError(s, parse.WrapError(s, fmt.Errorf(`invalid size: %w`, err)))
+			return parse.WrapError[node.TypeSizeNode](s, fmt.Errorf(`fail to parse integer: %w`, err))
 		}
 
-		return parse.Accept(s, node.TypeSize(int(size))), nil
+		return parse.Accept(s, node.TypeSize(int(size)))
 	}
 }
