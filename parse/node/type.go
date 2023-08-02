@@ -1,9 +1,5 @@
 package node
 
-import (
-	"github.com/Jumpaku/sqanner/tokenize"
-)
-
 type TypeCode int
 
 const (
@@ -35,9 +31,9 @@ type TypeNode interface {
 }
 
 func ArrayType(element TypeNode) NewNodeFunc[TypeNode] {
-	return func(begin int, tokens []tokenize.Token) TypeNode {
+	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase:     nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			nodeBase:     nodeBase{kind: NodeType, begin: begin, end: end},
 			code:         TypeArray,
 			arrayElement: element,
 		}
@@ -45,9 +41,9 @@ func ArrayType(element TypeNode) NewNodeFunc[TypeNode] {
 }
 
 func StructType(fields []StructTypeFieldNode) NewNodeFunc[TypeNode] {
-	return func(begin int, tokens []tokenize.Token) TypeNode {
+	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase:     nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			nodeBase:     nodeBase{kind: NodeType, begin: begin, end: end},
 			code:         TypeStruct,
 			structFields: fields,
 		}
@@ -55,18 +51,18 @@ func StructType(fields []StructTypeFieldNode) NewNodeFunc[TypeNode] {
 }
 
 func BoolType() NewNodeFunc[TypeNode] {
-	return func(begin int, tokens []tokenize.Token) TypeNode {
+	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
 			code:     TypeBool,
 		}
 	}
 }
 
 func BytesType(size TypeSizeNode) NewNodeFunc[TypeNode] {
-	return func(begin int, tokens []tokenize.Token) TypeNode {
+	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
 			code:     TypeBytes,
 			size:     size,
 		}
@@ -74,54 +70,54 @@ func BytesType(size TypeSizeNode) NewNodeFunc[TypeNode] {
 }
 
 func DateType() NewNodeFunc[TypeNode] {
-	return func(begin int, tokens []tokenize.Token) TypeNode {
+	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
 			code:     TypeDate,
 		}
 	}
 }
 
 func JSONType() NewNodeFunc[TypeNode] {
-	return func(begin int, tokens []tokenize.Token) TypeNode {
+	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
 			code:     TypeJSON,
 		}
 	}
 }
 
 func Int64Type() NewNodeFunc[TypeNode] {
-	return func(begin int, tokens []tokenize.Token) TypeNode {
+	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
 			code:     TypeInt64,
 		}
 	}
 }
 
 func NumericType() NewNodeFunc[TypeNode] {
-	return func(begin int, tokens []tokenize.Token) TypeNode {
+	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
 			code:     TypeNumeric,
 		}
 	}
 }
 
 func Float64Type() NewNodeFunc[TypeNode] {
-	return func(begin int, tokens []tokenize.Token) TypeNode {
+	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
 			code:     TypeFloat64,
 		}
 	}
 }
 
 func StringType(size TypeSizeNode) NewNodeFunc[TypeNode] {
-	return func(begin int, tokens []tokenize.Token) TypeNode {
+	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
 			code:     TypeString,
 			size:     size,
 		}
@@ -129,9 +125,9 @@ func StringType(size TypeSizeNode) NewNodeFunc[TypeNode] {
 }
 
 func TimestampType() NewNodeFunc[TypeNode] {
-	return func(begin int, tokens []tokenize.Token) TypeNode {
+	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase: nodeBase{kind: NodeType, begin: begin, tokens: tokens},
+			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
 			code:     TypeTimestamp,
 		}
 	}

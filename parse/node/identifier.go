@@ -1,7 +1,6 @@
 package node
 
 import (
-	"github.com/Jumpaku/sqanner/tokenize"
 	"strings"
 )
 
@@ -12,16 +11,18 @@ type IdentifierNode interface {
 	UnquotedValue() string
 }
 
-func Identifier() NewNodeFunc[IdentifierNode] {
-	return func(head int, tokens []tokenize.Token) IdentifierNode {
+func Identifier(value string) NewNodeFunc[IdentifierNode] {
+	return func(begin, end int) IdentifierNode {
 		return identifier{
-			nodeBase{kind: NodeIdentifier, begin: head, tokens: tokens},
+			nodeBase: nodeBase{kind: NodeIdentifier, begin: begin, end: end},
+			value:    value,
 		}
 	}
 }
 
 type identifier struct {
 	nodeBase
+	value string
 }
 
 var (
@@ -34,7 +35,7 @@ func (n identifier) Children() []Node {
 }
 
 func (n identifier) Value() string {
-	return string(n.Tokens()[0].Content)
+	return n.value
 }
 
 func (n identifier) IsQuoted() bool {
@@ -45,6 +46,5 @@ func (n identifier) UnquotedValue() string {
 	if n.IsQuoted() {
 		return n.Value()
 	}
-	c := n.tokens[0].Content
-	return string(c[1 : len(c)-1])
+	return n.value[1 : len(n.value)-1]
 }

@@ -1,7 +1,5 @@
 package node
 
-import "github.com/Jumpaku/sqanner/tokenize"
-
 type TypeSizeNode interface {
 	Node
 	Max() bool
@@ -9,18 +7,18 @@ type TypeSizeNode interface {
 }
 
 func TypeSize(size int) NewNodeFunc[TypeSizeNode] {
-	return func(begin int, tokens []tokenize.Token) TypeSizeNode {
+	return func(begin int, end int) TypeSizeNode {
 		return typeSize{
-			nodeBase: nodeBase{kind: NodeTypeSize, begin: begin, tokens: tokens},
+			nodeBase: nodeBase{kind: NodeTypeSize, begin: begin, end: end},
 			size:     size,
 		}
 	}
 }
 
 func TypeSizeMax() NewNodeFunc[TypeSizeNode] {
-	return func(begin int, tokens []tokenize.Token) TypeSizeNode {
+	return func(begin int, end int) TypeSizeNode {
 		return typeSize{
-			nodeBase: nodeBase{kind: NodeTypeSize, begin: begin, tokens: tokens},
+			nodeBase: nodeBase{kind: NodeTypeSize, begin: begin, end: end},
 			max:      true,
 		}
 	}

@@ -1,7 +1,5 @@
 package node
 
-import "github.com/Jumpaku/sqanner/tokenize"
-
 type StructTypeFieldNode interface {
 	Node
 	Name() IdentifierNode
@@ -9,9 +7,9 @@ type StructTypeFieldNode interface {
 }
 
 func StructTypeField(fieldName IdentifierNode, fieldType TypeNode) NewNodeFunc[StructTypeFieldNode] {
-	return func(begin int, tokens []tokenize.Token) StructTypeFieldNode {
+	return func(begin, end int) StructTypeFieldNode {
 		return structTypeField{
-			nodeBase:  nodeBase{kind: NodeStructTypeField, begin: begin, tokens: tokens},
+			nodeBase:  nodeBase{kind: NodeStructTypeField, begin: begin, end: end},
 			fieldName: fieldName,
 			fieldType: fieldType,
 		}

@@ -7,6 +7,8 @@ import (
 )
 
 func ParsePath(s *ParseState) (node.PathNode, error) {
+	Init(s)
+
 	var ch []node.IdentifierNode
 
 	s.SkipSpacesAndComments()

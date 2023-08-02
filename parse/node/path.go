@@ -1,18 +1,14 @@
 package node
 
-import (
-	"github.com/Jumpaku/sqanner/tokenize"
-)
-
 type PathNode interface {
 	Node
 	Identifiers() []IdentifierNode
 }
 
 func Path(identifiers []IdentifierNode) NewNodeFunc[PathNode] {
-	return func(head int, tokens []tokenize.Token) PathNode {
+	return func(begin, end int) PathNode {
 		return path{
-			nodeBase:    nodeBase{kind: NodePath, begin: head, tokens: tokens},
+			nodeBase:    nodeBase{kind: NodePath, begin: begin, end: end},
 			identifiers: identifiers,
 		}
 	}

@@ -5,57 +5,12 @@ import (
 	"github.com/Jumpaku/sqanner/parse/node"
 	"github.com/Jumpaku/sqanner/parse/parser"
 	"github.com/Jumpaku/sqanner/tokenize"
+	"github.com/davecgh/go-spew/spew"
 	"golang.org/x/exp/slices"
 	"strconv"
 	"strings"
 	"testing"
 )
-
-type testcase[T node.Node] struct {
-	message   string
-	input     []tokenize.Token
-	wantNode  T
-	shouldErr bool
-}
-
-func (tc testcase[T]) MessageWithInput() string {
-	msg := fmt.Sprintf(`%s: input=`, tc.message)
-	for _, token := range tc.input {
-		msg += fmt.Sprintf("[%q]", string(token.Content))
-	}
-
-	return msg
-}
-
-type nodeArrayElement struct {
-	path []int
-	node node.Node
-}
-
-func (e nodeArrayElement) pathText() string {
-	var path []string
-	for _, n := range e.path {
-		path = append(path, strconv.FormatInt(int64(n), 10))
-	}
-	return strings.Join(path, "-")
-}
-
-func (e nodeArrayElement) tokenText(input []tokenize.Token) string {
-	tokenSText := `[]string{`
-	for _, token := range input[e.node.Begin():e.node.End()] {
-		tokenSText += fmt.Sprintf(`%q,`, string(token.Content))
-	}
-	return tokenSText + `}`
-}
-
-func nodeArray(root node.Node, path []int) []nodeArrayElement {
-	arr := []nodeArrayElement{{path, root}}
-	for i, ch := range root.Children() {
-		chPath := append(append([]int{}, path...), i)
-		arr = append(arr, nodeArray(ch, chPath)...)
-	}
-	return arr
-}
 
 func testParse[T node.Node](t *testing.T, testcase testcase[T], sut func(s *parser.ParseState) (T, error)) {
 	t.Helper()
@@ -65,14 +20,14 @@ func testParse[T node.Node](t *testing.T, testcase testcase[T], sut func(s *pars
 
 	if (gotErr != nil) != testcase.shouldErr {
 		if testcase.shouldErr {
-			t.Errorf("%s:\n	err is expected but got nil", testcase.MessageWithInput())
+			t.Errorf("%s:\n	err is expected but got nil", testcase.messageWithInput())
 		} else {
-			t.Errorf("%s:\n	err is not expected but got %v", testcase.MessageWithInput(), gotErr)
+			t.Errorf("%s:\n	err is not expected but got %v", testcase.messageWithInput(), gotErr)
 		}
 	}
 
-	gotNodeArr := nodeArray(gotNode, []int{})
-	wantNodeArr := nodeArray(testcase.wantNode, []int{})
+	wantNodeArr := nodeArray(testcase.wantNode, []int{0})
+	gotNodeArr := nodeArray(gotNode, []int{0})
 
 	size := len(gotNodeArr)
 	if size < len(wantNodeArr) {
@@ -84,23 +39,80 @@ func testParse[T node.Node](t *testing.T, testcase testcase[T], sut func(s *pars
 		s := fmt.Sprintf(`  node[%d]:  `, i)
 		if i < len(wantNodeArr) {
 			want := wantNodeArr[i]
-			s += fmt.Sprintf(`want=%10s:%-17s`, want.pathText(), want.node.Kind().String()[4:])
+			s += fmt.Sprintf(`want=%-10s %-17s`, want.treePathText(), want.node.Kind().String()[4:])
 		} else {
-			s += fmt.Sprintf(`want=%10s:%-17s`, ``, `(nothing)`)
+			s += fmt.Sprintf(`want=%-10s %-17s`, ``, `(nothing)`)
 		}
+
+		s += ":"
 
 		if i < len(gotNodeArr) {
 			got := gotNodeArr[i]
-			s += fmt.Sprintf(`got=%10s:%17s(%s)`, got.pathText(), got.node.Kind().String()[4:], got.pathText())
+			s += fmt.Sprintf(`got=%-10s %s(%s)`, got.treePathText(), got.node.Kind().String()[4:], got.tokenText(testcase.input))
 		} else {
-			s += fmt.Sprintf(`got=%10s:(nothing)`, ``)
+			s += fmt.Sprintf(`got=%-10s (nothing)`, ``)
 		}
 
 		diff += s + "\n"
 	}
-	if !nodeMatch(testcase.wantNode, gotNode) {
-		t.Errorf("%s\n%s", testcase.MessageWithInput(), diff)
+	if !testcase.shouldErr {
+		if !nodeMatch(testcase.wantNode, gotNode) {
+			t.Errorf("%s\n%s", testcase.messageWithInput(), diff)
+		}
 	}
+}
+
+type testcase[T node.Node] struct {
+	message   string
+	input     []tokenize.Token
+	wantNode  T
+	shouldErr bool
+}
+
+func (tc testcase[T]) messageWithInput() string {
+	msg := fmt.Sprintf(`%s: input=`, tc.message)
+	for _, token := range tc.input {
+		msg += fmt.Sprintf("[%q]", string(token.Content))
+	}
+
+	return msg
+}
+
+func want[T node.Node](nodeFunc node.NewNodeFunc[T]) T {
+	return nodeFunc(0, 0)
+}
+
+type nodeArrayElement struct {
+	path []int
+	node node.Node
+}
+
+func (e nodeArrayElement) treePathText() string {
+	var path []string
+	for _, n := range e.path {
+		path = append(path, strconv.FormatInt(int64(n), 10))
+	}
+	return strings.Join(path, "-")
+}
+
+func (e nodeArrayElement) tokenText(input []tokenize.Token) string {
+	tokenSText := ``
+	for _, token := range input[e.node.Begin():e.node.End()] {
+		tokenSText += fmt.Sprintf(`[%q]`, string(token.Content))
+	}
+	return tokenSText + ``
+}
+
+func nodeArray(root node.Node, path []int) []nodeArrayElement {
+	if root == nil {
+		return nil
+	}
+	arr := []nodeArrayElement{{path, root}}
+	for i, ch := range root.Children() {
+		chPath := append(append([]int{}, path...), i)
+		arr = append(arr, nodeArray(ch, chPath)...)
+	}
+	return arr
 }
 
 func nodeMatch(want node.Node, got node.Node) bool {
@@ -163,11 +175,30 @@ func TestPrintTokens(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := fmt.Sprintf("{\n")
+	out += "\tmessage: ``,\n"
 	out += "\tinput: []tokenize.Token{\n"
 	for _, token := range tokens {
 		out += fmt.Sprintf("\t\t{Kind: tokenize.%s, Content:[]rune(%q)},\n", token.Kind.String(), string(token.Content))
 	}
 	out += "\t},\n"
+	out += "\twantNode: nil,\n"
+	out += "\tshouldErr: false,\n"
 	out += fmt.Sprintf("},\n")
 	fmt.Printf(`%s`, out)
+}
+
+func TestDebugParse(t *testing.T) {
+	input := []tokenize.Token{
+		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+		{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+		{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+		{Kind: tokenize.TokenIdentifier, Content: []rune("abc")},
+		{Kind: tokenize.TokenEOF, Content: []rune("")},
+	}
+	n, err := parser.ParseIdentifier(parser.NewParseState(input))
+	if err != nil {
+		t.Fatal(err)
+	}
+	spew.Dump(n)
 }
