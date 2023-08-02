@@ -508,23 +508,20 @@ func (k KeywordCode) String() string {
 type KeywordNode interface {
 	Node
 	KeywordCode() KeywordCode
-	AsIdentifier() IdentifierNode
 }
 
-func Keyword(value string) NewNodeFunc[KeywordNode] {
+func Keyword(code KeywordCode) NewNodeFunc[KeywordNode] {
 	return func(begin, end int) KeywordNode {
 		return keyword{
 			nodeBase: nodeBase{kind: NodeKeyword, begin: begin, end: end},
-			code:     KeywordCodeOf(value),
-			value:    value,
+			code:     code,
 		}
 	}
 }
 
 type keyword struct {
 	nodeBase
-	value string
-	code  KeywordCode
+	code KeywordCode
 }
 
 var (
@@ -538,8 +535,4 @@ func (n keyword) Children() []Node {
 
 func (n keyword) KeywordCode() KeywordCode {
 	return n.code
-}
-
-func (n keyword) AsIdentifier() IdentifierNode {
-	return Identifier(n.value)(n.Begin(), n.End())
 }

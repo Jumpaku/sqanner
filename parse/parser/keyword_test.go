@@ -16,15 +16,15 @@ func TestParseKeyword(t *testing.T) {
 				{Kind: tokenize.TokenKeyword, Content: []rune("ALL")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.Keyword("ALL")),
+			wantNode: nodeOf(node.Keyword(node.KeywordAll)),
 		},
 		{
 			message: `keyword`,
 			input: []tokenize.Token{
-				{Kind: tokenize.TokenKeyword, Content: []rune("ASSERT_ROWS_MODIFIED")},
+				{Kind: tokenize.TokenKeyword, Content: []rune("aSsErT_rOwS_mOdIfIeD")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.Keyword("aSsErT_rOwS_mOdIfIeD")),
+			wantNode: nodeOf(node.Keyword(node.KeywordAssertRowsModified)),
 		},
 		{
 			message: `keyword`,
@@ -32,7 +32,7 @@ func TestParseKeyword(t *testing.T) {
 				{Kind: tokenize.TokenKeyword, Content: []rune("GROUP")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.Keyword("GROUP")),
+			wantNode: nodeOf(node.Keyword(node.KeywordGroup)),
 		},
 		{
 			message: `identifier`,
@@ -86,7 +86,7 @@ func TestParseKeyword(t *testing.T) {
 				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.Keyword("SELECT")),
+			wantNode: nodeOf(node.Keyword(node.KeywordSelect)),
 		},
 	}
 
