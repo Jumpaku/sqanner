@@ -1,6 +1,7 @@
 package tokenize_test
 
 import (
+	"fmt"
 	"github.com/Jumpaku/sqanner/tokenize"
 	"testing"
 )
@@ -64,8 +65,10 @@ func TestSpaces(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		checkScan(t, testcase, tokenize.Spaces)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			checkScan(t, testcase, tokenize.Spaces)
+		})
 	}
 }
 
@@ -199,8 +202,10 @@ func TestComment(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		checkScan(t, testcase, tokenize.Comment)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			checkScan(t, testcase, tokenize.Comment)
+		})
 	}
 }
 
@@ -316,8 +321,10 @@ func TestIdentifierQuoted(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		checkScan(t, testcase, tokenize.IdentifierQuoted)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			checkScan(t, testcase, tokenize.IdentifierQuoted)
+		})
 	}
 }
 
@@ -658,8 +665,11 @@ func TestLiteralQuoted(t *testing.T) {
 	for _, lqTestcase := range lqTestcases {
 		testcases = append(testcases, toTestcases(lqTestcase)...)
 	}
-	for _, testcase := range testcases {
-		checkScan(t, testcase, tokenize.LiteralQuoted)
+
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			checkScan(t, testcase, tokenize.LiteralQuoted)
+		})
 	}
 }
 
@@ -745,8 +755,10 @@ func TestIdentifierOrKeyword(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		checkScan(t, testcase, tokenize.IdentifierOrKeyword)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			checkScan(t, testcase, tokenize.IdentifierOrKeyword)
+		})
 	}
 }
 
@@ -1018,8 +1030,10 @@ func TestNumberOrDot(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		checkScan(t, testcase, tokenize.NumberOrDot)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			checkScan(t, testcase, tokenize.NumberOrDot)
+		})
 	}
 }
 
@@ -1085,8 +1099,10 @@ func TestSpecialChar(t *testing.T) {
 		})
 	}
 
-	for _, testcase := range testcases {
-		checkScan(t, testcase, tokenize.SpecialChar)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			checkScan(t, testcase, tokenize.SpecialChar)
+		})
 	}
 }
 

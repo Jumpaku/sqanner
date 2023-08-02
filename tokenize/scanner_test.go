@@ -201,8 +201,10 @@ func TestTokenize_Identifiers(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -289,8 +291,10 @@ func TestTokenize_PathExpression(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -470,8 +474,10 @@ func TestTokenize_StringAndByteLiteral(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -508,8 +514,10 @@ func TestTokenize_IntegerLiteral(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -602,8 +610,10 @@ func TestTokenize_NumericLiteral(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -648,8 +658,10 @@ func TestTokenize_FloatLiteral(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -745,8 +757,10 @@ func TestTokenize_ArrayLiteral(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -894,8 +908,10 @@ func TestTokenize_Struct(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -985,8 +1001,10 @@ func TestTokenize_Date_Timestamp_JSON(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -1019,8 +1037,10 @@ func TestTokenize_Parameter(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -1054,8 +1074,10 @@ func TestTokenize_Hint(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -1274,7 +1296,9 @@ func TestTokenize_Comment(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
