@@ -130,7 +130,7 @@ func nodeMatch(want node.Node, got node.Node) bool {
 	case node.NodeKeyword:
 		w := want.(node.KeywordNode)
 		g := got.(node.KeywordNode)
-		return w.Value() == g.Value()
+		return w.KeywordCode() == g.KeywordCode()
 	case node.NodePath:
 		w := want.(node.PathNode)
 		g := got.(node.PathNode)

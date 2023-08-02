@@ -41,12 +41,24 @@ func ParsePath(s *ParseState) (node.PathNode, error) {
 				}
 				ch = append(ch, n)
 			case s.ExpectNext(IsAnyKind(tokenize.TokenKeyword)):
-				n, err := ParseKeyword(s)
+				n, err := parseKeywordAsIdentifier(s)
 				if err != nil {
 					return Error[node.PathNode](s, fmt.Errorf(`invalid keyword: %w`, err))
 				}
-				ch = append(ch, n.AsIdentifier())
+				ch = append(ch, n)
 			}
 		}
 	}
+}
+
+func parseKeywordAsIdentifier(s *ParseState) (node.IdentifierNode, error) {
+	Init(s)
+
+	s.SkipSpacesAndComments()
+	if !(s.ExpectNext(IsAnyKind(tokenize.TokenKeyword))) {
+		return Error[node.IdentifierNode](s, fmt.Errorf(`keyword not found`))
+	}
+	t := s.Next()
+
+	return Accept(s, node.Identifier(string(t.Content)))
 }
