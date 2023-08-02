@@ -23,16 +23,17 @@ func isKeyword(keyword string) func(t tokenize.Token) bool {
 	}
 }
 
-func isIdentifier(pattern string) func(t tokenize.Token) bool {
+func isIdentifier(ignoreCase bool, pattern ...string) func(t tokenize.Token) bool {
 	return func(t tokenize.Token) bool {
-		switch t.Kind {
-		default:
+		if t.Kind != tokenize.TokenIdentifier && t.Kind != tokenize.TokenIdentifierQuoted {
 			return false
-		case tokenize.TokenIdentifier:
-			return strings.ToLower(pattern) == strings.ToLower(string(t.Content))
-		case tokenize.TokenIdentifierQuoted:
-			c := t.Content
-			return strings.ToLower(pattern) == strings.ToLower(string(c[1:len(c)-1]))
 		}
+
+		if ignoreCase {
+			q := strings.ToLower(string(t.Content))
+			return slices.ContainsFunc(pattern, func(p string) bool { return q == strings.ToLower(p) })
+		}
+
+		return slices.Contains(pattern, string(t.Content))
 	}
 }

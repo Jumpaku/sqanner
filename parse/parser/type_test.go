@@ -8,31 +8,163 @@ import (
 	"testing"
 )
 
-func TestParseKeyword(t *testing.T) {
-	testcases := []testcase[node.KeywordNode]{
+func TestParseType_Scalar(t *testing.T) {
+	testcases := []testcase[node.TypeNode]{
 		{
-			message: `keyword`,
+			message: `bool`,
 			input: []tokenize.Token{
-				{Kind: tokenize.TokenKeyword, Content: []rune("ALL")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("bool")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.Keyword(node.KeywordAll)),
+			wantNode: nodeOf(node.BoolType()),
 		},
 		{
-			message: `keyword`,
+			message: `bool`,
 			input: []tokenize.Token{
-				{Kind: tokenize.TokenKeyword, Content: []rune("aSsErT_rOwS_mOdIfIeD")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("BOOL")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.Keyword(node.KeywordAssertRowsModified)),
+			wantNode: nodeOf(node.BoolType()),
 		},
 		{
-			message: `keyword`,
+			message: `int64`,
 			input: []tokenize.Token{
-				{Kind: tokenize.TokenKeyword, Content: []rune("GROUP")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("int64")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.Keyword(node.KeywordGroup)),
+			wantNode: nodeOf(node.Int64Type()),
+		},
+		{
+			message: `int64`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("INT64")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.Int64Type()),
+		},
+		{
+			message: `float64`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("float64")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.Float64Type()),
+		},
+		{
+			message: `float64`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("FLOAT64")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.Float64Type()),
+		},
+		{
+			message: `numeric`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("numeric")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.NumericType()),
+		},
+		{
+			message: `numeric`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("NUMERIC")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.NumericType()),
+		},
+		{
+			message: `json`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("json")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.JSONType()),
+		},
+		{
+			message: `json`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("JSON")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.JSONType()),
+		},
+		{
+			message: `date`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("date")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.DateType()),
+		},
+		{
+			message: `date`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("DATE")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.DateType()),
+		},
+		{
+			message: `timestamp`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("timestamp")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.TimestampType()),
+		},
+		{
+			message: `timestamp`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("TIMESTAMP")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.TimestampType()),
+		},
+		{
+			message: `string`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("string")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune("(")},
+				{Kind: tokenize.TokenLiteralInteger, Content: []rune("123")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(")")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.StringType(nodeOf(node.TypeSize(123)))),
+		},
+		{
+			message: `string`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("STRING")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune("(")},
+				{Kind: tokenize.TokenKeyword, Content: []rune("MAX")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(")")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.StringType(nodeOf(node.TypeSizeMax()))),
+		},
+		{
+			message: `bytes`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("bytes")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune("(")},
+				{Kind: tokenize.TokenLiteralInteger, Content: []rune("123")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(")")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.BytesType(nodeOf(node.TypeSize(123)))),
+		},
+		{
+			message: `bytes`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("BYTES")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune("(")},
+				{Kind: tokenize.TokenKeyword, Content: []rune("MAX")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(")")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.BytesType(nodeOf(node.TypeSizeMax()))),
 		},
 		{
 			message: `identifier`,
@@ -43,9 +175,9 @@ func TestParseKeyword(t *testing.T) {
 			shouldErr: true,
 		},
 		{
-			message: `quotedidentifier`,
+			message: `quoted identifier`,
 			input: []tokenize.Token{
-				{Kind: tokenize.TokenIdentifierQuoted, Content: []rune("`GROUP`")},
+				{Kind: tokenize.TokenIdentifierQuoted, Content: []rune("`INT64`")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
 			shouldErr: true,
@@ -82,17 +214,31 @@ func TestParseKeyword(t *testing.T) {
 				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
 				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
-				{Kind: tokenize.TokenKeyword, Content: []rune("SELECT")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("BYTES")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune("(")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenLiteralInteger, Content: []rune("123")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(")")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
 				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.Keyword(node.KeywordSelect)),
+			wantNode: nodeOf(node.BytesType(nodeOf(node.TypeSize(123)))),
 		},
 	}
 
 	for i, testcase := range testcases {
 		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
-			testParse(t, testcase, parser.ParseKeyword)
+			testParse(t, testcase, parser.ParseType)
 		})
 	}
 }

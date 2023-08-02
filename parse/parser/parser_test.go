@@ -193,13 +193,30 @@ func TestPrintTokens(t *testing.T) {
 
 func TestDebugParse(t *testing.T) {
 	input := []tokenize.Token{
-		{Kind: tokenize.TokenComment, Content: []rune("-- Valid. abc5 and dataField are valid identifiers.\n")},
-		{Kind: tokenize.TokenIdentifier, Content: []rune("abc5")},
-		{Kind: tokenize.TokenSpecialChar, Content: []rune(".")},
-		{Kind: tokenize.TokenIdentifier, Content: []rune("dataField")},
+		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+		{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+		{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+		{Kind: tokenize.TokenIdentifier, Content: []rune("BYTES")},
+		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+		{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+		{Kind: tokenize.TokenSpecialChar, Content: []rune("(")},
+		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+		{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+		{Kind: tokenize.TokenLiteralInteger, Content: []rune("123")},
+		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+		{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+		{Kind: tokenize.TokenSpecialChar, Content: []rune(")")},
+		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+		{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 		{Kind: tokenize.TokenEOF, Content: []rune("")},
 	}
-	n, err := parser.ParsePath(parser.NewParseState(input))
+	n, err := parser.ParseType(parser.NewParseState(input))
 	if err != nil {
 		t.Fatal(err)
 	}
