@@ -193,32 +193,19 @@ func TestPrintTokens(t *testing.T) {
 
 func TestDebugParse(t *testing.T) {
 	input := []tokenize.Token{
-		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
-		{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
-		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
-		{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
-		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+		{Kind: tokenize.TokenKeyword, Content: []rune("ARRAY")},
+		{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
 		{Kind: tokenize.TokenIdentifier, Content: []rune("BYTES")},
-		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
-		{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
-		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 		{Kind: tokenize.TokenSpecialChar, Content: []rune("(")},
-		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
-		{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
-		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 		{Kind: tokenize.TokenLiteralInteger, Content: []rune("123")},
-		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
-		{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
-		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 		{Kind: tokenize.TokenSpecialChar, Content: []rune(")")},
-		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
-		{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
-		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+		{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
 		{Kind: tokenize.TokenEOF, Content: []rune("")},
 	}
 	n, err := parser.ParseType(parser.NewParseState(input))
 	if err != nil {
 		t.Fatal(err)
 	}
-	spew.Dump(n)
+
+	spew.Dump(nodeMatch(n, nodeOf(node.ArrayType(nodeOf(node.StringType(nodeOf(node.TypeSize(123))))))))
 }

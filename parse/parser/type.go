@@ -49,7 +49,7 @@ func ParseType(s *ParseState) (node.TypeNode, error) {
 			return Error[node.TypeNode](s, fmt.Errorf(`invalid type size: %w`, err))
 		}
 		return Accept(s, node.StringType(size))
-	case s.ExpectNext(isKeyword(`Array`)):
+	case s.ExpectNext(isKeyword(`ARRAY`)):
 		s.Next()
 
 		s.SkipSpacesAndComments()
