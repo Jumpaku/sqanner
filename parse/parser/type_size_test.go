@@ -8,23 +8,55 @@ import (
 	"testing"
 )
 
-func TestParseKeyword(t *testing.T) {
-	testcases := []testcase[node.KeywordNode]{
+func TestParseTypeSize(t *testing.T) {
+	testcases := []testcase[node.TypeSizeNode]{
 		{
-			message: `keyword`,
+			message: `type size`,
 			input: []tokenize.Token{
-				{Kind: tokenize.TokenKeyword, Content: []rune("ALL")},
+				{Kind: tokenize.TokenLiteralInteger, Content: []rune("123")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.Keyword("ALL")),
+			wantNode: nodeOf(node.TypeSize(123)),
 		},
 		{
-			message: `keyword`,
+			message: `type size`,
 			input: []tokenize.Token{
-				{Kind: tokenize.TokenKeyword, Content: []rune("ASSERT_ROWS_MODIFIED")},
+				{Kind: tokenize.TokenLiteralInteger, Content: []rune("0xFF")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.Keyword("aSsErT_rOwS_mOdIfIeD")),
+			wantNode: nodeOf(node.TypeSize(255)),
+		},
+		{
+			message: `type size`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenLiteralInteger, Content: []rune("0X0A")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.TypeSize(10)),
+		},
+		{
+			message: `float`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenLiteralFloat, Content: []rune("123.5")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			shouldErr: true,
+		},
+		{
+			message: `max`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenKeyword, Content: []rune("MAX")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.TypeSizeMax()),
+		},
+		{
+			message: `max`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenKeyword, Content: []rune("mAx")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.TypeSizeMax()),
 		},
 		{
 			message: `keyword`,
@@ -32,7 +64,7 @@ func TestParseKeyword(t *testing.T) {
 				{Kind: tokenize.TokenKeyword, Content: []rune("GROUP")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.Keyword("GROUP")),
+			shouldErr: true,
 		},
 		{
 			message: `identifier`,
@@ -43,17 +75,9 @@ func TestParseKeyword(t *testing.T) {
 			shouldErr: true,
 		},
 		{
-			message: `quotedidentifier`,
+			message: `quoted identifier`,
 			input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifierQuoted, Content: []rune("`GROUP`")},
-				{Kind: tokenize.TokenEOF, Content: []rune("")},
-			},
-			shouldErr: true,
-		},
-		{
-			message: `number`,
-			input: []tokenize.Token{
-				{Kind: tokenize.TokenLiteralInteger, Content: []rune("123")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
 			shouldErr: true,
@@ -82,17 +106,17 @@ func TestParseKeyword(t *testing.T) {
 				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
 				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
-				{Kind: tokenize.TokenKeyword, Content: []rune("SELECT")},
+				{Kind: tokenize.TokenLiteralInteger, Content: []rune("123")},
 				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.Keyword("SELECT")),
+			wantNode: nodeOf(node.TypeSize(123)),
 		},
 	}
 
 	for i, testcase := range testcases {
 		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
-			testParse(t, testcase, parser.ParseKeyword)
+			testParse(t, testcase, parser.ParseTypeSize)
 		})
 	}
 }
