@@ -1,50 +1,38 @@
 package node
 
-import (
-	"strings"
-)
-
-type IdentifierNode interface {
+type KeywordNode interface {
 	Node
 	Value() string
-	IsQuoted() bool
-	UnquotedValue() string
+	AsIdentifier() IdentifierNode
 }
 
-func Identifier(value string) NewNodeFunc[IdentifierNode] {
-	return func(begin, end int) IdentifierNode {
-		return identifier{
-			nodeBase: nodeBase{kind: NodeIdentifier, begin: begin, end: end},
+func Keyword(value string) NewNodeFunc[KeywordNode] {
+	return func(begin, end int) KeywordNode {
+		return keyword{
+			nodeBase: nodeBase{kind: NodeKeyword, begin: begin, end: end},
 			value:    value,
 		}
 	}
 }
 
-type identifier struct {
+type keyword struct {
 	nodeBase
 	value string
 }
 
 var (
-	_ Node           = identifier{}
-	_ IdentifierNode = identifier{}
+	_ Node        = keyword{}
+	_ KeywordNode = keyword{}
 )
 
-func (n identifier) Children() []Node {
+func (n keyword) Children() []Node {
 	return nil
 }
 
-func (n identifier) Value() string {
+func (n keyword) Value() string {
 	return n.value
 }
 
-func (n identifier) IsQuoted() bool {
-	return strings.HasPrefix(n.Value(), "`")
-}
-
-func (n identifier) UnquotedValue() string {
-	if n.IsQuoted() {
-		return n.Value()
-	}
-	return n.value[1 : len(n.value)-1]
+func (n keyword) AsIdentifier() IdentifierNode {
+	return Identifier(n.Value())(n.Begin(), n.End())
 }

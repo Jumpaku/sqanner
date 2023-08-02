@@ -16,7 +16,7 @@ func TestParseIdentifier(t *testing.T) {
 				{Kind: tokenize.TokenIdentifier, Content: []rune("_5abc")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: want(node.Identifier("_5abc")),
+			wantNode: nodeOf(node.Identifier("_5abc")),
 		},
 		{
 			message: `unquoted identifier`,
@@ -24,7 +24,7 @@ func TestParseIdentifier(t *testing.T) {
 				{Kind: tokenize.TokenIdentifier, Content: []rune("abc5")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: want(node.Identifier("abc5")),
+			wantNode: nodeOf(node.Identifier("abc5")),
 		},
 		{
 			message: `quoted identifier`,
@@ -32,7 +32,7 @@ func TestParseIdentifier(t *testing.T) {
 				{Kind: tokenize.TokenIdentifier, Content: []rune("`GROUP`")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: want(node.Identifier("`GROUP`")),
+			wantNode: nodeOf(node.Identifier("`GROUP`")),
 		},
 		{
 			message: `quoted identifier`,
@@ -40,7 +40,7 @@ func TestParseIdentifier(t *testing.T) {
 				{Kind: tokenize.TokenIdentifier, Content: []rune("`gRouP`")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: want(node.Identifier("`gRouP`")),
+			wantNode: nodeOf(node.Identifier("`gRouP`")),
 		},
 
 		{
@@ -85,7 +85,7 @@ func TestParseIdentifier(t *testing.T) {
 				{Kind: tokenize.TokenIdentifier, Content: []rune("abc")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: want(node.Identifier("abc")),
+			wantNode: nodeOf(node.Identifier("abc")),
 		},
 	}
 

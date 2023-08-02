@@ -133,7 +133,7 @@ func (s *TokenScanner) wrapErr(err error) error {
 		sizeBefore = s.Cursor
 	}
 	input := string(s.Input[s.Cursor-sizeBefore : s.Cursor+sizeAfter])
-	return fmt.Errorf(`fail to scan token at line %d column %d near ...%s...: %w`, s.lines, s.columns, input, err)
+	return fmt.Errorf(`fail to scan token at line %d column %d near ...%q...: %w`, s.lines, s.columns, input, err)
 }
 
 // Tokenize returns a slice of Token representing the identified tokens in the input sequence.

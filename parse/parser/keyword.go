@@ -6,14 +6,14 @@ import (
 	"github.com/Jumpaku/sqanner/tokenize"
 )
 
-func ParseIdentifier(s *ParseState) (node.IdentifierNode, error) {
+func ParseKeyword(s *ParseState) (node.KeywordNode, error) {
 	Init(s)
 
 	s.SkipSpacesAndComments()
-	if !(s.ExpectNext(IsAnyKind(tokenize.TokenIdentifier, tokenize.TokenIdentifierQuoted))) {
-		return Error[node.IdentifierNode](s, fmt.Errorf(`quoted or unquoted identifier not found`))
+	if !(s.ExpectNext(IsAnyKind(tokenize.TokenKeyword))) {
+		return Error[node.KeywordNode](s, fmt.Errorf(`keyword not found`))
 	}
 	t := s.Next()
 
-	return Accept(s, node.Identifier(string(t.Content)))
+	return Accept(s, node.Keyword(string(t.Content)))
 }

@@ -8,90 +8,162 @@ import (
 	"testing"
 )
 
-func TestParseIdentifier(t *testing.T) {
-	testcases := []testcase[node.IdentifierNode]{
+func TestParsePath(t *testing.T) {
+	testcases := []testcase[node.PathNode]{
 		{
-			message: `unquoted identifier`,
+			message: `valid path`,
 			input: []tokenize.Token{
+				{Kind: tokenize.TokenComment, Content: []rune("-- Valid. _5abc and dataField are valid identifiers.\n")},
 				{Kind: tokenize.TokenIdentifier, Content: []rune("_5abc")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(".")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("dataField")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: want(node.Identifier("_5abc")),
+			wantNode: nodeOf(node.Path([]node.IdentifierNode{
+				nodeOf(node.Identifier("_5abc")),
+				nodeOf(node.Identifier("dataField")),
+			})),
 		},
 		{
-			message: `unquoted identifier`,
+			message: `valid path`,
 			input: []tokenize.Token{
+				{Kind: tokenize.TokenComment, Content: []rune("-- Valid. `5abc` and dataField are valid identifiers.\n")},
+				{Kind: tokenize.TokenIdentifierQuoted, Content: []rune("`5abc`")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(".")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("dataField")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.Path([]node.IdentifierNode{
+				nodeOf(node.Identifier("`5abc`")),
+				nodeOf(node.Identifier("dataField")),
+			})),
+		},
+		{
+			message: `valid path`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenComment, Content: []rune("-- Valid. `5abc` and dataField are valid identifiers.\n")},
+				{Kind: tokenize.TokenIdentifierQuoted, Content: []rune("`5abc`")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(".")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("`dataField`")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.Path([]node.IdentifierNode{
+				nodeOf(node.Identifier("`5abc`")),
+				nodeOf(node.Identifier("`dataField`")),
+			})),
+		},
+		{
+			message: `valid path`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenComment, Content: []rune("-- Valid. abc5 and dataField are valid identifiers.\n")},
 				{Kind: tokenize.TokenIdentifier, Content: []rune("abc5")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(".")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("dataField")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: want(node.Identifier("abc5")),
+			wantNode: nodeOf(node.Path([]node.IdentifierNode{
+				nodeOf(node.Identifier("abc5")),
+				nodeOf(node.Identifier("dataField")),
+			})),
 		},
 		{
-			message: `quoted identifier`,
+			message: `valid path`,
 			input: []tokenize.Token{
-				{Kind: tokenize.TokenIdentifier, Content: []rune("`GROUP`")},
+				{Kind: tokenize.TokenComment, Content: []rune("-- Invalid. abc5! is an invalid identifier because it is unquoted and contains\n")},
+				{Kind: tokenize.TokenComment, Content: []rune("-- a character that is not a letter, number, or underscore.\n")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("abc5")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune("!")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(".")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("dataField")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: want(node.Identifier("`GROUP`")),
+			wantNode: nodeOf(node.Path([]node.IdentifierNode{
+				nodeOf(node.Identifier("abc5")),
+			})),
 		},
 		{
-			message: `quoted identifier`,
+			message: `invalid path`,
 			input: []tokenize.Token{
-				{Kind: tokenize.TokenIdentifier, Content: []rune("`gRouP`")},
-				{Kind: tokenize.TokenEOF, Content: []rune("")},
-			},
-			wantNode: want(node.Identifier("`gRouP`")),
-		},
-
-		{
-			message: `number`,
-			input: []tokenize.Token{
-				{Kind: tokenize.TokenLiteralInteger, Content: []rune("123")},
+				{Kind: tokenize.TokenComment, Content: []rune("-- Invalid. abc5! is an invalid identifier because it is unquoted and contains\n")},
+				{Kind: tokenize.TokenComment, Content: []rune("-- a character that is not a letter, number, or underscore.\n")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("abc5")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(".")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune("!")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("dataField")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
 			shouldErr: true,
 		},
 		{
-			message: `keyword`,
+			message: `valid path`,
 			input: []tokenize.Token{
+				{Kind: tokenize.TokenComment, Content: []rune("-- Valid. `GROUP` and dataField are valid identifiers.\n")},
+				{Kind: tokenize.TokenIdentifierQuoted, Content: []rune("`GROUP`")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(".")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("dataField")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.Path([]node.IdentifierNode{
+				nodeOf(node.Identifier("`GROUP`")),
+				nodeOf(node.Identifier("dataField")),
+			})),
+		},
+		{
+			message: `invalid path`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenComment, Content: []rune("-- Invalid. GROUP is an invalid identifier because it is unquoted and is a\n")},
+				{Kind: tokenize.TokenComment, Content: []rune("-- stand-alone reserved keyword.\n")},
+				{Kind: tokenize.TokenKeyword, Content: []rune("GROUP")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(".")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("dataField")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			shouldErr: true,
+		},
+		{
+			message: `valid path`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenComment, Content: []rune("-- Valid. abc5 and GROUP are valid identifiers.\n")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("abc5")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(".")},
 				{Kind: tokenize.TokenKeyword, Content: []rune("GROUP")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			shouldErr: true,
+			wantNode: nodeOf(node.Path([]node.IdentifierNode{
+				nodeOf(node.Identifier("abc5")),
+				nodeOf(node.Identifier("GROUP")),
+			})),
 		},
 		{
-			message: `dot`,
+			message: `valid path with spaces`,
 			input: []tokenize.Token{
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("abc5")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(".")},
-				{Kind: tokenize.TokenEOF, Content: []rune("")},
-			},
-			shouldErr: true,
-		},
-		{
-			message: `special char`,
-			input: []tokenize.Token{
-				{Kind: tokenize.TokenSpecialChar, Content: []rune("@")},
-				{Kind: tokenize.TokenEOF, Content: []rune("")},
-			},
-			shouldErr: true,
-		},
-		{
-			message: `starts with spaces`,
-			input: []tokenize.Token{
 				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
 				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenKeyword, Content: []rune("GROUP")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
-				{Kind: tokenize.TokenIdentifier, Content: []rune("abc")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: want(node.Identifier("abc")),
+			wantNode: nodeOf(node.Path([]node.IdentifierNode{
+				nodeOf(node.Identifier("abc5")),
+				nodeOf(node.Identifier("GROUP")),
+			})),
 		},
 	}
 
 	for i, testcase := range testcases {
 		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
-			testParse(t, testcase, parser.ParseIdentifier)
+			testParse(t, testcase, parser.ParsePath)
 		})
 	}
 }

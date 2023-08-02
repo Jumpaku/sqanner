@@ -8,6 +8,7 @@ const (
 	NodeUnspecified NodeKind = iota
 
 	NodeIdentifier
+	NodeKeyword
 	NodePath
 	NodeStructTypeField
 	NodeType
@@ -22,6 +23,8 @@ func (k NodeKind) String() string {
 		return "NodeUnspecified"
 	case NodeIdentifier:
 		return "NodeIdentifier"
+	case NodeKeyword:
+		return "NodeKeyword"
 	case NodePath:
 		return "NodePath"
 	case NodeStructTypeField:

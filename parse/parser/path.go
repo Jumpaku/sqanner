@@ -23,17 +23,30 @@ func ParsePath(s *ParseState) (node.PathNode, error) {
 	}
 
 	for {
+		s.SkipSpacesAndComments()
 		switch {
 		default:
 			return Accept(s, node.Path(ch))
 		case s.ExpectNext(isSeparator):
 			s.Next()
 
-			n, err := ParseIdentifier(s)
-			if err != nil {
+			s.SkipSpacesAndComments()
+			switch {
+			default:
 				return Error[node.PathNode](s, fmt.Errorf(`identifier not found after '.'`))
+			case s.ExpectNext(IsAnyKind(tokenize.TokenIdentifier, tokenize.TokenIdentifierQuoted)):
+				n, err := ParseIdentifier(s)
+				if err != nil {
+					return Error[node.PathNode](s, fmt.Errorf(`invalid identifier: %w`, err))
+				}
+				ch = append(ch, n)
+			case s.ExpectNext(IsAnyKind(tokenize.TokenKeyword)):
+				n, err := ParseKeyword(s)
+				if err != nil {
+					return Error[node.PathNode](s, fmt.Errorf(`invalid keyword: %w`, err))
+				}
+				ch = append(ch, n.AsIdentifier())
 			}
-			ch = append(ch, n)
 		}
 	}
 }

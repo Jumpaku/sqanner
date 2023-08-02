@@ -78,7 +78,7 @@ func (tc testcase[T]) messageWithInput() string {
 	return msg
 }
 
-func want[T node.Node](nodeFunc node.NewNodeFunc[T]) T {
+func nodeOf[T node.Node](nodeFunc node.NewNodeFunc[T]) T {
 	return nodeFunc(0, 0)
 }
 
@@ -126,7 +126,11 @@ func nodeMatch(want node.Node, got node.Node) bool {
 	case node.NodeIdentifier:
 		w := want.(node.IdentifierNode)
 		g := got.(node.IdentifierNode)
-		return w.Value() == g.Value() && slices.EqualFunc(w.Children(), g.Children(), nodeMatch)
+		return w.Value() == g.Value()
+	case node.NodeKeyword:
+		w := want.(node.KeywordNode)
+		g := got.(node.KeywordNode)
+		return w.Value() == g.Value()
 	case node.NodePath:
 		w := want.(node.PathNode)
 		g := got.(node.PathNode)
@@ -168,7 +172,7 @@ func nodeMatch(want node.Node, got node.Node) bool {
 }
 
 func TestPrintTokens(t *testing.T) {
-	input := "_5abc.dataField"
+	input := "-- Valid. abc5 and GROUP are valid identifiers.\nabc5.GROUP"
 
 	tokens, err := tokenize.Tokenize([]rune(input))
 	if err != nil {
@@ -189,14 +193,13 @@ func TestPrintTokens(t *testing.T) {
 
 func TestDebugParse(t *testing.T) {
 	input := []tokenize.Token{
-		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
-		{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
-		{Kind: tokenize.TokenSpace, Content: []rune(" ")},
-		{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
-		{Kind: tokenize.TokenIdentifier, Content: []rune("abc")},
+		{Kind: tokenize.TokenComment, Content: []rune("-- Valid. abc5 and dataField are valid identifiers.\n")},
+		{Kind: tokenize.TokenIdentifier, Content: []rune("abc5")},
+		{Kind: tokenize.TokenSpecialChar, Content: []rune(".")},
+		{Kind: tokenize.TokenIdentifier, Content: []rune("dataField")},
 		{Kind: tokenize.TokenEOF, Content: []rune("")},
 	}
-	n, err := parser.ParseIdentifier(parser.NewParseState(input))
+	n, err := parser.ParsePath(parser.NewParseState(input))
 	if err != nil {
 		t.Fatal(err)
 	}
