@@ -15,5 +15,5 @@ func ParseKeyword(s *ParseState) (node.KeywordNode, error) {
 	}
 	t := s.Next()
 
-	return Accept(s, node.Keyword(node.KeywordCodeOf(string(t.Content))))
+	return Expect(s, node.Keyword(node.KeywordCodeOf(string(t.Content))))
 }

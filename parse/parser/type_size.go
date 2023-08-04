@@ -18,7 +18,7 @@ func ParseTypeSize(s *ParseState) (node.TypeSizeNode, error) {
 	case s.ExpectNext(isKeyword("MAX")):
 		s.Next()
 
-		return Accept(s, node.TypeSizeMax())
+		return Expect(s, node.TypeSizeMax())
 	case s.ExpectNext(IsAnyKind(tokenize.TokenLiteralInteger)):
 		t := s.Next()
 
@@ -27,6 +27,6 @@ func ParseTypeSize(s *ParseState) (node.TypeSizeNode, error) {
 			return Error[node.TypeSizeNode](s, fmt.Errorf(`fail to parse integer: %w`, err))
 		}
 
-		return Accept(s, node.TypeSize(int(size)))
+		return Expect(s, node.TypeSize(int(size)))
 	}
 }

@@ -15,5 +15,5 @@ func ParseIdentifier(s *ParseState) (node.IdentifierNode, error) {
 	}
 	t := s.Next()
 
-	return Accept(s, node.Identifier(string(t.Content)))
+	return Expect(s, node.Identifier(string(t.Content)))
 }

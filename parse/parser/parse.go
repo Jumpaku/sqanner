@@ -24,13 +24,17 @@ func Init(s *ParseState) {
 	s.begins.Push(s.Cursor)
 }
 
-func Accept[T node.Node](s *ParseState, newNode func(int, int) T) (T, error) {
-	head := s.begins.Pop()
-	return newNode(head, s.Cursor), nil
+func Expect[T node.Node](s *ParseState, newNode func(int, int) T) (T, error) {
+	return newNode(s.begins.Peek(), s.Cursor), nil
+}
+
+func Accept[T node.Node](s *ParseState, node T) (T, error) {
+	s.begins.Pop()
+	return node, nil
 }
 
 func Error[T node.Node](s *ParseState, err error) (T, error) {
-	t := s.peek()
+	t := s.PeekAt(0)
 
 	begin := s.Cursor
 	if begin > 0 {
@@ -52,10 +56,10 @@ func Error[T node.Node](s *ParseState, err error) (T, error) {
 }
 
 func (s *ParseState) ExpectNext(expect func(token tokenize.Token) bool) bool {
-	if s.len() == 0 {
+	if s.Len() == 0 {
 		return false
 	}
-	return expect(s.peek())
+	return expect(s.PeekAt(0))
 }
 
 func (s *ParseState) Next() tokenize.Token {
@@ -69,10 +73,10 @@ func (s *ParseState) SkipSpacesAndComments() {
 	}
 }
 
-func (s *ParseState) len() int {
+func (s *ParseState) Len() int {
 	return len(s.input[s.Cursor:])
 }
 
-func (s *ParseState) peek() tokenize.Token {
-	return s.input[s.Cursor]
+func (s *ParseState) PeekAt(offset int) tokenize.Token {
+	return s.input[s.Cursor+offset]
 }

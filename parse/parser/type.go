@@ -14,25 +14,25 @@ func ParseType(s *ParseState) (node.TypeNode, error) {
 		return Error[node.TypeNode](s, fmt.Errorf(`invalid type: valid type identifier not found`))
 	case s.ExpectNext(isIdentifier(true, `BOOL`)):
 		s.Next()
-		return Accept(s, node.BoolType())
+		return Expect(s, node.BoolType())
 	case s.ExpectNext(isIdentifier(true, `DATE`)):
 		s.Next()
-		return Accept(s, node.DateType())
+		return Expect(s, node.DateType())
 	case s.ExpectNext(isIdentifier(true, `JSON`)):
 		s.Next()
-		return Accept(s, node.JSONType())
+		return Expect(s, node.JSONType())
 	case s.ExpectNext(isIdentifier(true, `INT64`)):
 		s.Next()
-		return Accept(s, node.Int64Type())
+		return Expect(s, node.Int64Type())
 	case s.ExpectNext(isIdentifier(true, `NUMERIC`)):
 		s.Next()
-		return Accept(s, node.NumericType())
+		return Expect(s, node.NumericType())
 	case s.ExpectNext(isIdentifier(true, `FLOAT64`)):
 		s.Next()
-		return Accept(s, node.Float64Type())
+		return Expect(s, node.Float64Type())
 	case s.ExpectNext(isIdentifier(true, `TIMESTAMP`)):
 		s.Next()
-		return Accept(s, node.TimestampType())
+		return Expect(s, node.TimestampType())
 	case s.ExpectNext(isIdentifier(true, `BYTES`)):
 		s.Next()
 		s.SkipSpacesAndComments()
@@ -40,7 +40,7 @@ func ParseType(s *ParseState) (node.TypeNode, error) {
 		if err != nil {
 			return Error[node.TypeNode](s, fmt.Errorf(`invalid type size: %w`, err))
 		}
-		return Accept(s, node.BytesType(size))
+		return Expect(s, node.BytesType(size))
 	case s.ExpectNext(isIdentifier(true, `STRING`)):
 		s.Next()
 		s.SkipSpacesAndComments()
@@ -48,7 +48,7 @@ func ParseType(s *ParseState) (node.TypeNode, error) {
 		if err != nil {
 			return Error[node.TypeNode](s, fmt.Errorf(`invalid type size: %w`, err))
 		}
-		return Accept(s, node.StringType(size))
+		return Expect(s, node.StringType(size))
 	case s.ExpectNext(isKeyword(`ARRAY`)):
 		s.Next()
 
@@ -70,7 +70,7 @@ func ParseType(s *ParseState) (node.TypeNode, error) {
 		}
 		s.Next()
 
-		return Accept(s, node.ArrayType(element))
+		return Expect(s, node.ArrayType(element))
 
 	case s.ExpectNext(isKeyword(`STRUCT`)):
 		s.Next()
@@ -98,7 +98,7 @@ func ParseType(s *ParseState) (node.TypeNode, error) {
 				s.Next()
 			case s.ExpectNext(isSpecial('>')):
 				s.Next()
-				return Accept(s, node.StructType(fields))
+				return Expect(s, node.StructType(fields))
 			}
 		}
 	}

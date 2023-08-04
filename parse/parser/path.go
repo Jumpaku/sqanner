@@ -26,7 +26,7 @@ func ParsePath(s *ParseState) (node.PathNode, error) {
 		s.SkipSpacesAndComments()
 		switch {
 		default:
-			return Accept(s, node.Path(ch))
+			return Expect(s, node.Path(ch))
 		case s.ExpectNext(isSeparator):
 			s.Next()
 
@@ -60,5 +60,5 @@ func parseKeywordAsIdentifier(s *ParseState) (node.IdentifierNode, error) {
 	}
 	t := s.Next()
 
-	return Accept(s, node.Identifier(string(t.Content)))
+	return Expect(s, node.Identifier(string(t.Content)))
 }
