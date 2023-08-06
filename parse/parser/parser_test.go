@@ -15,8 +15,7 @@ import (
 func testParse[T node.Node](t *testing.T, testcase testcase[T], sut func(s *parser.ParseState) (T, error)) {
 	t.Helper()
 
-	s := parser.NewParseState(testcase.input)
-	gotNode, gotErr := sut(s)
+	gotNode, gotErr := sut(parser.NewParseState(testcase.input))
 
 	if (gotErr != nil) != testcase.shouldErr {
 		if testcase.shouldErr {
@@ -138,7 +137,11 @@ func nodeMatch(want node.Node, got node.Node) bool {
 	case node.NodeStructTypeField:
 		w := want.(node.StructTypeFieldNode)
 		g := got.(node.StructTypeFieldNode)
-		return nodeMatch(w.Name(), g.Name()) && nodeMatch(w.Type(), g.Type())
+		ok := w.Named() == g.Named() && nodeMatch(w.Type(), g.Type())
+		if w.Named() {
+			ok = ok && nodeMatch(w.Name(), g.Name())
+		}
+		return ok
 	case node.NodeType:
 		w := want.(node.TypeNode)
 		g := got.(node.TypeNode)
@@ -150,8 +153,8 @@ func nodeMatch(want node.Node, got node.Node) bool {
 		default:
 			panic(`invalid type`)
 		case w.IsScalar():
-			ok = ok && w.ScalarName() == g.ScalarName() && w.ScalarHasSize() == g.ScalarHasSize()
-			if w.ScalarHasSize() {
+			ok = ok && w.ScalarName() == g.ScalarName() && w.ScalarSized() == g.ScalarSized()
+			if w.ScalarSized() {
 				ok = ok && nodeMatch(w.ScalarSize(), g.ScalarSize())
 			}
 			return ok
@@ -195,9 +198,9 @@ func TestDebugParse(t *testing.T) {
 	input := []tokenize.Token{
 		{Kind: tokenize.TokenKeyword, Content: []rune("ARRAY")},
 		{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
-		{Kind: tokenize.TokenIdentifier, Content: []rune("BYTES")},
+		{Kind: tokenize.TokenIdentifier, Content: []rune("STRING")},
 		{Kind: tokenize.TokenSpecialChar, Content: []rune("(")},
-		{Kind: tokenize.TokenLiteralInteger, Content: []rune("123")},
+		{Kind: tokenize.TokenIdentifier, Content: []rune("MAX")},
 		{Kind: tokenize.TokenSpecialChar, Content: []rune(")")},
 		{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
 		{Kind: tokenize.TokenEOF, Content: []rune("")},
@@ -207,5 +210,5 @@ func TestDebugParse(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	spew.Dump(nodeMatch(n, nodeOf(node.ArrayType(nodeOf(node.StringType(nodeOf(node.TypeSize(123))))))))
+	spew.Dump(nodeMatch(n, nodeOf(node.ArrayType(nodeOf(node.StringTypeSized(nodeOf(node.TypeSize(123))))))))
 }

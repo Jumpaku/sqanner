@@ -2,12 +2,12 @@ package node
 
 type StructTypeFieldNode interface {
 	Node
-	Anonymous() bool
+	Named() bool
 	Name() IdentifierNode
 	Type() TypeNode
 }
 
-func StructTypeFieldAnonymous(fieldType TypeNode) NewNodeFunc[StructTypeFieldNode] {
+func StructTypeFieldUnnamed(fieldType TypeNode) NewNodeFunc[StructTypeFieldNode] {
 	return func(begin, end int) StructTypeFieldNode {
 		return structTypeField{
 			nodeBase:  nodeBase{kind: NodeStructTypeField, begin: begin, end: end},
@@ -35,15 +35,18 @@ var _ Node = structTypeField{}
 var _ StructTypeFieldNode = structTypeField{}
 
 func (n structTypeField) Children() []Node {
-	return []Node{n.fieldName, n.fieldType}
+	if n.Named() {
+		return []Node{n.fieldName, n.fieldType}
+	}
+	return []Node{n.fieldType}
 }
 
 func (n structTypeField) Name() IdentifierNode {
 	return n.fieldName
 }
 
-func (n structTypeField) Anonymous() bool {
-	return n.fieldName == nil
+func (n structTypeField) Named() bool {
+	return n.fieldName != nil
 }
 
 func (n structTypeField) Type() TypeNode {

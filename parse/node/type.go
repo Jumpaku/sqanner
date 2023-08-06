@@ -22,7 +22,7 @@ type TypeNode interface {
 	TypeCode() TypeCode
 	IsScalar() bool
 	ScalarName() string
-	ScalarHasSize() bool
+	ScalarSized() bool
 	ScalarSize() TypeSizeNode
 	IsArray() bool
 	ArrayElement() TypeNode
@@ -59,12 +59,22 @@ func BoolType() NewNodeFunc[TypeNode] {
 	}
 }
 
-func BytesType(size TypeSizeNode) NewNodeFunc[TypeNode] {
+func BytesTypeSized(size TypeSizeNode) NewNodeFunc[TypeNode] {
 	return func(begin int, end int) TypeNode {
 		return anyType{
 			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
 			code:     TypeBytes,
+			sized:    true,
 			size:     size,
+		}
+	}
+}
+
+func BytesType() NewNodeFunc[TypeNode] {
+	return func(begin int, end int) TypeNode {
+		return anyType{
+			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
+			code:     TypeBytes,
 		}
 	}
 }
@@ -114,12 +124,22 @@ func Float64Type() NewNodeFunc[TypeNode] {
 	}
 }
 
-func StringType(size TypeSizeNode) NewNodeFunc[TypeNode] {
+func StringTypeSized(size TypeSizeNode) NewNodeFunc[TypeNode] {
 	return func(begin int, end int) TypeNode {
 		return anyType{
 			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
 			code:     TypeString,
+			sized:    true,
 			size:     size,
+		}
+	}
+}
+
+func StringType() NewNodeFunc[TypeNode] {
+	return func(begin int, end int) TypeNode {
+		return anyType{
+			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
+			code:     TypeString,
 		}
 	}
 }
@@ -137,6 +157,7 @@ type anyType struct {
 	nodeBase
 	code         TypeCode
 	size         TypeSizeNode
+	sized        bool
 	arrayElement TypeNode
 	structFields []StructTypeFieldNode
 }
@@ -148,7 +169,10 @@ func (n anyType) Children() []Node {
 	default:
 		return nil
 	case TypeBytes, TypeString:
-		return []Node{n.size}
+		if n.sized {
+			return []Node{n.size}
+		}
+		return nil
 	case TypeArray:
 		return []Node{n.arrayElement}
 	case TypeStruct:
@@ -164,8 +188,8 @@ func (n anyType) IsScalar() bool {
 	return n.code != TypeArray && n.code != TypeStruct
 }
 
-func (n anyType) ScalarHasSize() bool {
-	return n.code == TypeBytes || n.code == TypeString
+func (n anyType) ScalarSized() bool {
+	return n.sized
 }
 
 func (n anyType) ScalarSize() TypeSizeNode {

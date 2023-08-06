@@ -45,7 +45,7 @@ func TestParseTypeSize(t *testing.T) {
 		{
 			message: `max`,
 			input: []tokenize.Token{
-				{Kind: tokenize.TokenKeyword, Content: []rune("MAX")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("MAX")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
 			wantNode: nodeOf(node.TypeSizeMax()),
@@ -53,7 +53,7 @@ func TestParseTypeSize(t *testing.T) {
 		{
 			message: `max`,
 			input: []tokenize.Token{
-				{Kind: tokenize.TokenKeyword, Content: []rune("mAx")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("mAx")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
 			wantNode: nodeOf(node.TypeSizeMax()),

@@ -6,99 +6,109 @@ import (
 )
 
 func ParseType(s *ParseState) (node.TypeNode, error) {
-	Init(s)
-
 	s.SkipSpacesAndComments()
 	switch {
 	default:
-		return Error[node.TypeNode](s, fmt.Errorf(`invalid type: valid type identifier not found`))
-	case s.ExpectNext(isIdentifier(true, `BOOL`)):
-		s.Next()
-		return Expect(s, node.BoolType())
-	case s.ExpectNext(isIdentifier(true, `DATE`)):
-		s.Next()
-		return Expect(s, node.DateType())
-	case s.ExpectNext(isIdentifier(true, `JSON`)):
-		s.Next()
-		return Expect(s, node.JSONType())
-	case s.ExpectNext(isIdentifier(true, `INT64`)):
-		s.Next()
-		return Expect(s, node.Int64Type())
-	case s.ExpectNext(isIdentifier(true, `NUMERIC`)):
-		s.Next()
-		return Expect(s, node.NumericType())
-	case s.ExpectNext(isIdentifier(true, `FLOAT64`)):
-		s.Next()
-		return Expect(s, node.Float64Type())
-	case s.ExpectNext(isIdentifier(true, `TIMESTAMP`)):
-		s.Next()
-		return Expect(s, node.TimestampType())
-	case s.ExpectNext(isIdentifier(true, `BYTES`)):
-		s.Next()
+		return nil, Error(s, fmt.Errorf(`invalid type: valid type identifier not found`))
+	case IsIdentifier(s.PeekAt(0), true, `BOOL`):
+		s.Move(1)
+		return Accept(s, node.BoolType()), nil
+	case IsIdentifier(s.PeekAt(0), true, `DATE`):
+		s.Move(1)
+		return Accept(s, node.DateType()), nil
+	case IsIdentifier(s.PeekAt(0), true, `JSON`):
+		s.Move(1)
+		return Accept(s, node.JSONType()), nil
+	case IsIdentifier(s.PeekAt(0), true, `INT64`):
+		s.Move(1)
+		return Accept(s, node.Int64Type()), nil
+	case IsIdentifier(s.PeekAt(0), true, `NUMERIC`):
+		s.Move(1)
+		return Accept(s, node.NumericType()), nil
+	case IsIdentifier(s.PeekAt(0), true, `FLOAT64`):
+		s.Move(1)
+		return Accept(s, node.Float64Type()), nil
+	case IsIdentifier(s.PeekAt(0), true, `TIMESTAMP`):
+		s.Move(1)
+		return Accept(s, node.TimestampType()), nil
+	case IsIdentifier(s.PeekAt(0), true, `BYTES`):
+		s.Move(1)
+		s.SkipSpacesAndComments()
+		if !IsAnySpecial(s.PeekAt(0), '(') {
+			return Accept(s, node.BytesType()), nil
+		}
+
 		s.SkipSpacesAndComments()
 		size, err := parseEnclosedTypeSize(s)
 		if err != nil {
-			return Error[node.TypeNode](s, fmt.Errorf(`invalid type size: %w`, err))
+			return nil, Error(s, fmt.Errorf(`invalid type size: %w`, err))
 		}
-		return Expect(s, node.BytesType(size))
-	case s.ExpectNext(isIdentifier(true, `STRING`)):
-		s.Next()
+		return Accept(s, node.BytesTypeSized(size)), nil
+	case IsIdentifier(s.PeekAt(0), true, `STRING`):
+		s.Move(1)
+		s.SkipSpacesAndComments()
+		if !IsAnySpecial(s.PeekAt(0), '(') {
+			return Accept(s, node.StringType()), nil
+		}
+
 		s.SkipSpacesAndComments()
 		size, err := parseEnclosedTypeSize(s)
 		if err != nil {
-			return Error[node.TypeNode](s, fmt.Errorf(`invalid type size: %w`, err))
+			return nil, Error(s, fmt.Errorf(`invalid type size: %w`, err))
 		}
-		return Expect(s, node.StringType(size))
-	case s.ExpectNext(isKeyword(`ARRAY`)):
-		s.Next()
+		return Accept(s, node.StringTypeSized(size)), nil
+	case IsKeyword(s.PeekAt(0), node.KeywordArray):
+		s.Move(1)
 
 		s.SkipSpacesAndComments()
-		if !s.ExpectNext(isSpecial('<')) {
-			return Error[node.TypeNode](s, fmt.Errorf(`invalid array type element: '<' not found`))
+		if !IsAnySpecial(s.PeekAt(0), '<') {
+			return nil, Error(s, fmt.Errorf(`invalid array type element: '<' not found`))
 		}
-		s.Next()
+		s.Move(1)
 
 		s.SkipSpacesAndComments()
-		element, err := ParseType(s)
+		element, err := ParseType(s.Child())
 		if err != nil {
-			return Error[node.TypeNode](s, fmt.Errorf(`invalid array type element: %w`, err))
+			return nil, Error(s, fmt.Errorf(`invalid array type element: %w`, err))
 		}
+		s.Move(element.Len())
 
 		s.SkipSpacesAndComments()
-		if !s.ExpectNext(isSpecial('>')) {
-			return Error[node.TypeNode](s, fmt.Errorf(`invalid array type element: '>' not found`))
+		if !IsAnySpecial(s.PeekAt(0), '>') {
+			return nil, Error(s, fmt.Errorf(`invalid array type element: '>' not found`))
 		}
-		s.Next()
+		s.Move(1)
 
-		return Expect(s, node.ArrayType(element))
+		return Accept(s, node.ArrayType(element)), nil
 
-	case s.ExpectNext(isKeyword(`STRUCT`)):
-		s.Next()
+	case IsKeyword(s.PeekAt(0), node.KeywordStruct):
+		s.Move(1)
 
 		s.SkipSpacesAndComments()
-		if !s.ExpectNext(isSpecial('<')) {
-			return Error[node.TypeNode](s, fmt.Errorf(`invalid struct type field: '<' not found`))
+		if !IsAnySpecial(s.PeekAt(0), '<') {
+			return nil, Error(s, fmt.Errorf(`invalid struct type field: '<' not found`))
 		}
-		s.Next()
+		s.Move(1)
 
 		var fields []node.StructTypeFieldNode
 		for {
 			s.SkipSpacesAndComments()
-			field, err := ParseStructField(s)
+			field, err := ParseStructField(s.Child())
 			if err != nil {
-				return Error[node.TypeNode](s, fmt.Errorf(`invalid struct type field: %w`, err))
+				return nil, Error(s, fmt.Errorf(`invalid struct type field: %w`, err))
 			}
+			s.Move(field.Len())
 			fields = append(fields, field)
 
 			s.SkipSpacesAndComments()
 			switch {
 			default:
-				return Error[node.TypeNode](s, fmt.Errorf(`invalid struct type field: ',' or '>' not found`))
-			case s.ExpectNext(isSpecial(',')):
-				s.Next()
-			case s.ExpectNext(isSpecial('>')):
-				s.Next()
-				return Expect(s, node.StructType(fields))
+				return nil, Error(s, fmt.Errorf(`invalid struct type field: ',' or '>' not found`))
+			case IsAnySpecial(s.PeekAt(0), ','):
+				s.Move(1)
+			case IsAnySpecial(s.PeekAt(0), '>'):
+				s.Move(1)
+				return Accept(s, node.StructType(fields)), nil
 			}
 		}
 	}
@@ -106,22 +116,23 @@ func ParseType(s *ParseState) (node.TypeNode, error) {
 
 func parseEnclosedTypeSize(s *ParseState) (node.TypeSizeNode, error) {
 	s.SkipSpacesAndComments()
-	if !s.ExpectNext(isSpecial('(')) {
-		return Error[node.TypeSizeNode](s, fmt.Errorf(`invalid type size: '(' not found`))
+	if !IsAnySpecial(s.PeekAt(0), '(') {
+		return nil, Error(s, fmt.Errorf(`invalid type size: '(' not found`))
 	}
-	s.Next()
+	s.Move(1)
 
 	s.SkipSpacesAndComments()
-	size, err := ParseTypeSize(s)
+	size, err := ParseTypeSize(s.Child())
 	if err != nil {
-		return Error[node.TypeSizeNode](s, fmt.Errorf(`invalid type size: %w`, err))
+		return nil, Error(s, fmt.Errorf(`invalid type size: %w`, err))
 	}
+	s.Move(size.Len())
 
 	s.SkipSpacesAndComments()
-	if !s.ExpectNext(isSpecial(')')) {
-		return Error[node.TypeSizeNode](s, fmt.Errorf(`invalid type size: ')' not found`))
+	if !IsAnySpecial(s.PeekAt(0), ')') {
+		return nil, Error(s, fmt.Errorf(`invalid type size: ')' not found`))
 	}
-	s.Next()
+	s.Move(1)
 
 	return size, nil
 }

@@ -7,13 +7,13 @@ import (
 )
 
 func ParseIdentifier(s *ParseState) (node.IdentifierNode, error) {
-	Init(s)
-
 	s.SkipSpacesAndComments()
-	if !(s.ExpectNext(IsAnyKind(tokenize.TokenIdentifier, tokenize.TokenIdentifierQuoted))) {
-		return Error[node.IdentifierNode](s, fmt.Errorf(`quoted or unquoted identifier not found`))
-	}
-	t := s.Next()
 
-	return Expect(s, node.Identifier(string(t.Content)))
+	t := s.PeekAt(0)
+	if !IsAnyKind(t, tokenize.TokenIdentifier, tokenize.TokenIdentifierQuoted) {
+		return nil, Error(s, fmt.Errorf(`quoted or unquoted identifier not found`))
+	}
+	s.Move(1)
+
+	return Accept(s, node.Identifier(string(t.Content))), nil
 }

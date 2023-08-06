@@ -131,18 +131,18 @@ func TestParseType_Scalar(t *testing.T) {
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(")")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.StringType(nodeOf(node.TypeSize(123)))),
+			wantNode: nodeOf(node.StringTypeSized(nodeOf(node.TypeSize(123)))),
 		},
 		{
 			message: `string`,
 			input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune("STRING")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("(")},
-				{Kind: tokenize.TokenKeyword, Content: []rune("MAX")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("MAX")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(")")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.StringType(nodeOf(node.TypeSizeMax()))),
+			wantNode: nodeOf(node.StringTypeSized(nodeOf(node.TypeSizeMax()))),
 		},
 		{
 			message: `bytes`,
@@ -153,18 +153,18 @@ func TestParseType_Scalar(t *testing.T) {
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(")")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.BytesType(nodeOf(node.TypeSize(123)))),
+			wantNode: nodeOf(node.BytesTypeSized(nodeOf(node.TypeSize(123)))),
 		},
 		{
 			message: `bytes`,
 			input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune("BYTES")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("(")},
-				{Kind: tokenize.TokenKeyword, Content: []rune("MAX")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("MAX")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(")")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.BytesType(nodeOf(node.TypeSizeMax()))),
+			wantNode: nodeOf(node.BytesTypeSized(nodeOf(node.TypeSizeMax()))),
 		},
 		{
 			message: `identifier`,
@@ -232,7 +232,7 @@ func TestParseType_Scalar(t *testing.T) {
 				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.BytesType(nodeOf(node.TypeSize(123)))),
+			wantNode: nodeOf(node.BytesTypeSized(nodeOf(node.TypeSize(123)))),
 		},
 	}
 
@@ -329,12 +329,12 @@ func TestParseType_Array(t *testing.T) {
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
 				{Kind: tokenize.TokenIdentifier, Content: []rune("STRING")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("(")},
-				{Kind: tokenize.TokenKeyword, Content: []rune("MAX")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("MAX")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(")")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.ArrayType(nodeOf(node.StringType(nodeOf(node.TypeSizeMax()))))),
+			wantNode: nodeOf(node.ArrayType(nodeOf(node.StringTypeSized(nodeOf(node.TypeSizeMax()))))),
 		},
 		{
 			message: `array of bytes`,
@@ -348,7 +348,7 @@ func TestParseType_Array(t *testing.T) {
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.ArrayType(nodeOf(node.BytesType(nodeOf(node.TypeSize(123)))))),
+			wantNode: nodeOf(node.ArrayType(nodeOf(node.BytesTypeSized(nodeOf(node.TypeSize(123)))))),
 		},
 		{
 			message: `including spaces`,
@@ -384,7 +384,7 @@ func TestParseType_Array(t *testing.T) {
 				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.ArrayType(nodeOf(node.BytesType(nodeOf(node.TypeSize(123)))))),
+			wantNode: nodeOf(node.ArrayType(nodeOf(node.BytesTypeSized(nodeOf(node.TypeSize(123)))))),
 		},
 	}
 

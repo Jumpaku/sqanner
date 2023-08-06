@@ -6,6 +6,7 @@ type Node interface {
 	Kind() NodeKind
 	Begin() int
 	End() int
+	Len() int
 	Children() []Node
 }
 
@@ -25,4 +26,8 @@ func (n nodeBase) Begin() int {
 
 func (n nodeBase) End() int {
 	return n.end
+}
+
+func (n nodeBase) Len() int {
+	return n.end - n.begin
 }
