@@ -394,3 +394,173 @@ func TestParseType_Array(t *testing.T) {
 		})
 	}
 }
+
+func TestParseType_Struct(t *testing.T) {
+	testcases := []testcase[node.TypeNode]{
+		{
+			message: `struct with unnamed fields`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenKeyword, Content: []rune("STRUCT")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("int64")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(",")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("string")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune("(")},
+				{Kind: tokenize.TokenLiteralInteger, Content: []rune("123")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(")")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(",")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("bytes")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune("(")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("MAX")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(")")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.StructType([]node.StructTypeFieldNode{
+				nodeOf(node.StructTypeFieldUnnamed(nodeOf(node.Int64Type()))),
+				nodeOf(node.StructTypeFieldUnnamed(nodeOf(node.StringTypeSized(nodeOf(node.TypeSize(123)))))),
+				nodeOf(node.StructTypeFieldUnnamed(nodeOf(node.BytesTypeSized(nodeOf(node.TypeSizeMax()))))),
+			})),
+		},
+		{
+			message: `empty struct`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenKeyword, Content: []rune("STRUCT")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.StructType([]node.StructTypeFieldNode{})),
+		},
+		{
+			message: `struct with named fields`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenKeyword, Content: []rune("STRUCT")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("a")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("int64")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(",")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("b")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("string")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.StructType([]node.StructTypeFieldNode{
+				nodeOf(node.StructTypeField(nodeOf(node.Identifier("a")), nodeOf(node.Int64Type()))),
+				nodeOf(node.StructTypeField(nodeOf(node.Identifier("b")), nodeOf(node.StringType()))),
+			})),
+		},
+	}
+
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testParse(t, testcase, parser.ParseType)
+		})
+	}
+}
+
+func TestParseType_Complex(t *testing.T) {
+	testcases := []testcase[node.TypeNode]{
+		{
+			message: `struct in struct`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenKeyword, Content: []rune("STRUCT")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("x")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenKeyword, Content: []rune("STRUCT")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("y")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("INT64")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(",")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("z")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("INT64")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.StructType([]node.StructTypeFieldNode{
+				nodeOf(node.StructTypeField(
+					nodeOf(node.Identifier("x")),
+					nodeOf(node.StructType([]node.StructTypeFieldNode{
+						nodeOf(node.StructTypeField(nodeOf(node.Identifier("y")), nodeOf(node.Int64Type()))),
+						nodeOf(node.StructTypeField(nodeOf(node.Identifier("z")), nodeOf(node.Int64Type()))),
+					})))),
+			})),
+		},
+		{
+			message: `array in struct`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenKeyword, Content: []rune("STRUCT")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("inner_array")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenKeyword, Content: []rune("ARRAY")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("INT64")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.StructType([]node.StructTypeFieldNode{
+				nodeOf(node.StructTypeField(
+					nodeOf(node.Identifier("inner_array")),
+					nodeOf(node.ArrayType(nodeOf(node.Int64Type()))))),
+			})),
+		},
+		{
+			message: `struct in array`,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenKeyword, Content: []rune("ARRAY")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
+				{Kind: tokenize.TokenKeyword, Content: []rune("STRUCT")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("INT64")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(",")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("INT64")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.ArrayType(
+				nodeOf(node.StructType([]node.StructTypeFieldNode{
+					nodeOf(node.StructTypeFieldUnnamed(nodeOf(node.Int64Type()))),
+					nodeOf(node.StructTypeFieldUnnamed(nodeOf(node.Int64Type()))),
+				})))),
+		},
+		{
+			message: ``,
+			input: []tokenize.Token{
+				{Kind: tokenize.TokenKeyword, Content: []rune("ARRAY")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
+				{Kind: tokenize.TokenKeyword, Content: []rune("STRUCT")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
+				{Kind: tokenize.TokenKeyword, Content: []rune("ARRAY")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("INT64")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
+				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			wantNode: nodeOf(node.ArrayType(
+				nodeOf(node.StructType([]node.StructTypeFieldNode{
+					nodeOf(node.StructTypeFieldUnnamed(
+						nodeOf(node.ArrayType(nodeOf(node.Int64Type()))))),
+				})))),
+		},
+	}
+
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testParse(t, testcase, parser.ParseType)
+		})
+	}
+}

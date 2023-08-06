@@ -175,7 +175,7 @@ func nodeMatch(want node.Node, got node.Node) bool {
 }
 
 func TestPrintTokens(t *testing.T) {
-	input := "-- Valid. abc5 and GROUP are valid identifiers.\nabc5.GROUP"
+	input := "ARRAY<STRUCT<ARRAY<INT64>>>"
 
 	tokens, err := tokenize.Tokenize([]rune(input))
 	if err != nil {

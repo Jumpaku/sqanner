@@ -90,9 +90,14 @@ func ParseType(s *ParseState) (node.TypeNode, error) {
 		}
 		s.Move(1)
 
+		s.SkipSpacesAndComments()
+		if IsAnySpecial(s.PeekAt(0), '>') {
+			s.Move(1)
+			return Accept(s, node.StructType(nil)), nil
+		}
+
 		var fields []node.StructTypeFieldNode
 		for {
-			s.SkipSpacesAndComments()
 			field, err := ParseStructField(s.Child())
 			if err != nil {
 				return nil, Error(s, fmt.Errorf(`invalid struct type field: %w`, err))
