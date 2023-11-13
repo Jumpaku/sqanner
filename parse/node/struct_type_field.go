@@ -10,7 +10,7 @@ type StructTypeFieldNode interface {
 func StructTypeFieldUnnamed(fieldType TypeNode) NewNodeFunc[StructTypeFieldNode] {
 	return func(begin, end int) StructTypeFieldNode {
 		return structTypeField{
-			nodeBase:  nodeBase{kind: NodeStructTypeField, begin: begin, end: end},
+			nodeBase:  nodeBase{kind: KindStructTypeField, begin: begin, end: end},
 			fieldType: fieldType,
 		}
 	}
@@ -18,7 +18,7 @@ func StructTypeFieldUnnamed(fieldType TypeNode) NewNodeFunc[StructTypeFieldNode]
 func StructTypeField(fieldName IdentifierNode, fieldType TypeNode) NewNodeFunc[StructTypeFieldNode] {
 	return func(begin, end int) StructTypeFieldNode {
 		return structTypeField{
-			nodeBase:  nodeBase{kind: NodeStructTypeField, begin: begin, end: end},
+			nodeBase:  nodeBase{kind: KindStructTypeField, begin: begin, end: end},
 			fieldName: fieldName,
 			fieldType: fieldType,
 		}

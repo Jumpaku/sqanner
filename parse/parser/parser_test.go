@@ -122,19 +122,19 @@ func nodeMatch(want node.Node, got node.Node) bool {
 	switch want.Kind() {
 	default:
 		panic(fmt.Sprintf(`unsupported node kind: %v`, want.Kind()))
-	case node.NodeIdentifier:
+	case node.KindIdentifier:
 		w := want.(node.IdentifierNode)
 		g := got.(node.IdentifierNode)
 		return w.Value() == g.Value()
-	case node.NodeKeyword:
+	case node.KindKeyword:
 		w := want.(node.KeywordNode)
 		g := got.(node.KeywordNode)
 		return w.KeywordCode() == g.KeywordCode()
-	case node.NodePath:
+	case node.KindPath:
 		w := want.(node.PathNode)
 		g := got.(node.PathNode)
 		return slices.EqualFunc(w.Identifiers(), g.Identifiers(), func(w, g node.IdentifierNode) bool { return nodeMatch(w, g) })
-	case node.NodeStructTypeField:
+	case node.KindStructTypeField:
 		w := want.(node.StructTypeFieldNode)
 		g := got.(node.StructTypeFieldNode)
 		ok := w.Named() == g.Named() && nodeMatch(w.Type(), g.Type())
@@ -142,7 +142,7 @@ func nodeMatch(want node.Node, got node.Node) bool {
 			ok = ok && nodeMatch(w.Name(), g.Name())
 		}
 		return ok
-	case node.NodeType:
+	case node.KindType:
 		w := want.(node.TypeNode)
 		g := got.(node.TypeNode)
 		ok := w.TypeCode() == g.TypeCode() &&
@@ -163,7 +163,7 @@ func nodeMatch(want node.Node, got node.Node) bool {
 		case w.IsStruct():
 			return ok && slices.EqualFunc(w.StructFields(), g.StructFields(), func(w, g node.StructTypeFieldNode) bool { return nodeMatch(w, g) })
 		}
-	case node.NodeTypeSize:
+	case node.KindTypeSize:
 		w := want.(node.TypeSizeNode)
 		g := got.(node.TypeSizeNode)
 		ok := w.Max() == g.Max()

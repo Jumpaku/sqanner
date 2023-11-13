@@ -9,7 +9,7 @@ type TypeSizeNode interface {
 func TypeSize(size int) NewNodeFunc[TypeSizeNode] {
 	return func(begin int, end int) TypeSizeNode {
 		return typeSize{
-			nodeBase: nodeBase{kind: NodeTypeSize, begin: begin, end: end},
+			nodeBase: nodeBase{kind: KindTypeSize, begin: begin, end: end},
 			size:     size,
 		}
 	}
@@ -18,7 +18,7 @@ func TypeSize(size int) NewNodeFunc[TypeSizeNode] {
 func TypeSizeMax() NewNodeFunc[TypeSizeNode] {
 	return func(begin int, end int) TypeSizeNode {
 		return typeSize{
-			nodeBase: nodeBase{kind: NodeTypeSize, begin: begin, end: end},
+			nodeBase: nodeBase{kind: KindTypeSize, begin: begin, end: end},
 			max:      true,
 		}
 	}

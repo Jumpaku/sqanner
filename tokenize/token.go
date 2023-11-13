@@ -1,8 +1,8 @@
 package tokenize
 
-import "github.com/Jumpaku/go-assert"
-
 // TokenKind represents the type of token identified by the token scanner.
+//
+//go:generate go run "golang.org/x/tools/cmd/stringer" -type TokenKind token.go
 type TokenKind int
 
 const (
@@ -29,38 +29,6 @@ const (
 	// TokenSpecialChar represents a special character token.
 	TokenSpecialChar
 )
-
-// The String method for TokenKind returns the name of the token code as a string.
-// If an invalid TokenKind is encountered, it will raise an assertion error.
-func (k TokenKind) String() string {
-	switch k {
-	default:
-		assert.State(false, `invalid TokenKind: %d`, k)
-		return assert.Unexpected1[string](`invalid TokenKind is unexpected`)
-	case TokenUnspecified:
-		return "TokenUnspecified"
-	case TokenEOF:
-		return "TokenEOF"
-	case TokenSpace:
-		return "TokenSpace"
-	case TokenComment:
-		return "TokenComment"
-	case TokenIdentifier:
-		return "TokenIdentifier"
-	case TokenIdentifierQuoted:
-		return "TokenIdentifierQuoted"
-	case TokenLiteralQuoted:
-		return "TokenLiteralQuoted"
-	case TokenLiteralInteger:
-		return "TokenLiteralInteger"
-	case TokenLiteralFloat:
-		return "TokenLiteralFloat"
-	case TokenKeyword:
-		return "TokenKeyword"
-	case TokenSpecialChar:
-		return "TokenSpecialChar"
-	}
-}
 
 // Token represents a single token identified by the token scanner.
 // The Token struct is used to represent identified tokens during the tokenization process.

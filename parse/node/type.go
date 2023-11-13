@@ -1,5 +1,6 @@
 package node
 
+//go:generate go run "golang.org/x/tools/cmd/stringer" -type TypeCode type.go
 type TypeCode int
 
 const (
@@ -33,7 +34,7 @@ type TypeNode interface {
 func ArrayType(element TypeNode) NewNodeFunc[TypeNode] {
 	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase:     nodeBase{kind: NodeType, begin: begin, end: end},
+			nodeBase:     nodeBase{kind: KindType, begin: begin, end: end},
 			code:         TypeArray,
 			arrayElement: element,
 		}
@@ -43,7 +44,7 @@ func ArrayType(element TypeNode) NewNodeFunc[TypeNode] {
 func StructType(fields []StructTypeFieldNode) NewNodeFunc[TypeNode] {
 	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase:     nodeBase{kind: NodeType, begin: begin, end: end},
+			nodeBase:     nodeBase{kind: KindType, begin: begin, end: end},
 			code:         TypeStruct,
 			structFields: fields,
 		}
@@ -53,7 +54,7 @@ func StructType(fields []StructTypeFieldNode) NewNodeFunc[TypeNode] {
 func BoolType() NewNodeFunc[TypeNode] {
 	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
+			nodeBase: nodeBase{kind: KindType, begin: begin, end: end},
 			code:     TypeBool,
 		}
 	}
@@ -62,7 +63,7 @@ func BoolType() NewNodeFunc[TypeNode] {
 func BytesTypeSized(size TypeSizeNode) NewNodeFunc[TypeNode] {
 	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
+			nodeBase: nodeBase{kind: KindType, begin: begin, end: end},
 			code:     TypeBytes,
 			sized:    true,
 			size:     size,
@@ -73,7 +74,7 @@ func BytesTypeSized(size TypeSizeNode) NewNodeFunc[TypeNode] {
 func BytesType() NewNodeFunc[TypeNode] {
 	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
+			nodeBase: nodeBase{kind: KindType, begin: begin, end: end},
 			code:     TypeBytes,
 		}
 	}
@@ -82,7 +83,7 @@ func BytesType() NewNodeFunc[TypeNode] {
 func DateType() NewNodeFunc[TypeNode] {
 	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
+			nodeBase: nodeBase{kind: KindType, begin: begin, end: end},
 			code:     TypeDate,
 		}
 	}
@@ -91,7 +92,7 @@ func DateType() NewNodeFunc[TypeNode] {
 func JSONType() NewNodeFunc[TypeNode] {
 	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
+			nodeBase: nodeBase{kind: KindType, begin: begin, end: end},
 			code:     TypeJSON,
 		}
 	}
@@ -100,7 +101,7 @@ func JSONType() NewNodeFunc[TypeNode] {
 func Int64Type() NewNodeFunc[TypeNode] {
 	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
+			nodeBase: nodeBase{kind: KindType, begin: begin, end: end},
 			code:     TypeInt64,
 		}
 	}
@@ -109,7 +110,7 @@ func Int64Type() NewNodeFunc[TypeNode] {
 func NumericType() NewNodeFunc[TypeNode] {
 	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
+			nodeBase: nodeBase{kind: KindType, begin: begin, end: end},
 			code:     TypeNumeric,
 		}
 	}
@@ -118,7 +119,7 @@ func NumericType() NewNodeFunc[TypeNode] {
 func Float64Type() NewNodeFunc[TypeNode] {
 	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
+			nodeBase: nodeBase{kind: KindType, begin: begin, end: end},
 			code:     TypeFloat64,
 		}
 	}
@@ -127,7 +128,7 @@ func Float64Type() NewNodeFunc[TypeNode] {
 func StringTypeSized(size TypeSizeNode) NewNodeFunc[TypeNode] {
 	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
+			nodeBase: nodeBase{kind: KindType, begin: begin, end: end},
 			code:     TypeString,
 			sized:    true,
 			size:     size,
@@ -138,7 +139,7 @@ func StringTypeSized(size TypeSizeNode) NewNodeFunc[TypeNode] {
 func StringType() NewNodeFunc[TypeNode] {
 	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
+			nodeBase: nodeBase{kind: KindType, begin: begin, end: end},
 			code:     TypeString,
 		}
 	}
@@ -147,7 +148,7 @@ func StringType() NewNodeFunc[TypeNode] {
 func TimestampType() NewNodeFunc[TypeNode] {
 	return func(begin int, end int) TypeNode {
 		return anyType{
-			nodeBase: nodeBase{kind: NodeType, begin: begin, end: end},
+			nodeBase: nodeBase{kind: KindType, begin: begin, end: end},
 			code:     TypeTimestamp,
 		}
 	}

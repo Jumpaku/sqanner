@@ -14,7 +14,7 @@ type IdentifierNode interface {
 func Identifier(value string) NewNodeFunc[IdentifierNode] {
 	return func(begin, end int) IdentifierNode {
 		return identifier{
-			nodeBase: nodeBase{kind: NodeIdentifier, begin: begin, end: end},
+			nodeBase: nodeBase{kind: KindIdentifier, begin: begin, end: end},
 			value:    value,
 		}
 	}
