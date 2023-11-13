@@ -9,7 +9,7 @@ import (
 type testcaseTokenize struct {
 	message    string
 	input      string
-	wantTokens []tokenize.TokenCode
+	wantTokens []tokenize.TokenKind
 	shouldErr  bool
 }
 
@@ -33,7 +33,7 @@ func testTokenize(t *testing.T, testcase testcaseTokenize) {
 	ok := len(testcase.wantTokens) == len(gotTokens)
 	diff := ``
 	for i := 0; i < size; i++ {
-		var want, got tokenize.TokenCode
+		var want, got tokenize.TokenKind
 		s := fmt.Sprintf(`	token[%d]:	`, i)
 		if i < len(testcase.wantTokens) {
 			want = testcase.wantTokens[i]
@@ -43,7 +43,7 @@ func testTokenize(t *testing.T, testcase testcaseTokenize) {
 		}
 
 		if i < len(gotTokens) {
-			got = gotTokens[i].Code
+			got = gotTokens[i].Kind
 			s += fmt.Sprintf(`got=%s(%q)`, got.String()[5:], string(gotTokens[i].Content))
 		} else {
 			s += fmt.Sprintf(`got=(nothing)`)
@@ -64,7 +64,7 @@ func TestTokenize_Identifiers(t *testing.T) {
 		{
 			message: `valid identifiers`,
 			input:   "-- Valid. _5abc and dataField are valid identifiers.\n_5abc.dataField",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenComment,
 				tokenize.TokenIdentifier,
 				tokenize.TokenSpecialChar,
@@ -76,7 +76,7 @@ func TestTokenize_Identifiers(t *testing.T) {
 		{
 			message: `valid quoted identifiers`,
 			input:   "-- Valid. `5abc` and dataField are valid identifiers.\n`5abc`.dataField",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenComment,
 				tokenize.TokenIdentifierQuoted,
 				tokenize.TokenSpecialChar,
@@ -94,7 +94,7 @@ func TestTokenize_Identifiers(t *testing.T) {
 		{
 			message: `valid identifiers`,
 			input:   "-- Valid. abc5 and dataField are valid identifiers.\nabc5.dataField",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenComment,
 				tokenize.TokenIdentifier,
 				tokenize.TokenSpecialChar,
@@ -106,7 +106,7 @@ func TestTokenize_Identifiers(t *testing.T) {
 		{
 			message: `identifiers`,
 			input:   "-- Invalid. abc5! is an invalid identifier because it is unquoted and contains\n-- a character that is not a letter, number, or underscore.\nabc5!.dataField",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenComment,
 				tokenize.TokenComment,
 				tokenize.TokenIdentifier,
@@ -120,7 +120,7 @@ func TestTokenize_Identifiers(t *testing.T) {
 		{
 			message: `valid quoted identifiers`,
 			input:   "-- Valid. `GROUP` and dataField are valid identifiers.\n`GROUP`.dataField",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenComment,
 				tokenize.TokenIdentifierQuoted,
 				tokenize.TokenSpecialChar,
@@ -132,7 +132,7 @@ func TestTokenize_Identifiers(t *testing.T) {
 		{
 			message: `invalid identifiers`,
 			input:   "-- Invalid. GROUP is an invalid identifier because it is unquoted and is a\n-- stand-alone reserved keyword.\nGROUP.dataField",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenComment,
 				tokenize.TokenComment,
 				tokenize.TokenKeyword,
@@ -145,7 +145,7 @@ func TestTokenize_Identifiers(t *testing.T) {
 		{
 			message: `identifiers`,
 			input:   "-- Valid. abc5 and GROUP are valid identifiers.\nabc5.GROUP",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenComment,
 				tokenize.TokenIdentifier,
 				tokenize.TokenSpecialChar,
@@ -157,7 +157,7 @@ func TestTokenize_Identifiers(t *testing.T) {
 		{
 			message: `function call`,
 			input:   "-- Valid. dataField is a valid identifier in a function called foo().\nfoo().dataField",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenComment,
 				tokenize.TokenIdentifier,
 				tokenize.TokenSpecialChar,
@@ -171,7 +171,7 @@ func TestTokenize_Identifiers(t *testing.T) {
 		{
 			message: `function call`,
 			input:   "-- Valid. dataField is a valid identifier in an array called items.\nitems[OFFSET(3)].dataField",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenComment,
 				tokenize.TokenIdentifier,
 				tokenize.TokenSpecialChar,
@@ -189,7 +189,7 @@ func TestTokenize_Identifiers(t *testing.T) {
 		{
 			message: `parameter`,
 			input:   "-- Valid. param and dataField are valid identifiers.\n@param.dataField",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenComment,
 				tokenize.TokenSpecialChar,
 				tokenize.TokenIdentifier,
@@ -201,8 +201,10 @@ func TestTokenize_Identifiers(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -212,7 +214,7 @@ func TestTokenize_PathExpression(t *testing.T) {
 		{
 			message: `valid path expression`,
 			input:   "foo.bar",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenIdentifier,
 				tokenize.TokenSpecialChar,
 				tokenize.TokenIdentifier,
@@ -223,7 +225,7 @@ func TestTokenize_PathExpression(t *testing.T) {
 		{
 			message: `valid path expression`,
 			input:   "foo.bar/25",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenIdentifier,
 				tokenize.TokenSpecialChar,
 				tokenize.TokenIdentifier,
@@ -236,7 +238,7 @@ func TestTokenize_PathExpression(t *testing.T) {
 		{
 			message: `valid path expression`,
 			input:   "foo/bar:25",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenIdentifier,
 				tokenize.TokenSpecialChar,
 				tokenize.TokenIdentifier,
@@ -249,7 +251,7 @@ func TestTokenize_PathExpression(t *testing.T) {
 		{
 			message: `valid path expression`,
 			input:   "foo/bar/25-31",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenIdentifier,
 				tokenize.TokenSpecialChar,
 				tokenize.TokenIdentifier,
@@ -264,7 +266,7 @@ func TestTokenize_PathExpression(t *testing.T) {
 		{
 			message: `valid path expression`,
 			input:   "/foo/bar",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenSpecialChar,
 				tokenize.TokenIdentifier,
 				tokenize.TokenSpecialChar,
@@ -276,7 +278,7 @@ func TestTokenize_PathExpression(t *testing.T) {
 		{
 			message: `valid path expression`,
 			input:   "/25/foo/bar",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenSpecialChar,
 				tokenize.TokenLiteralInteger,
 				tokenize.TokenSpecialChar,
@@ -289,8 +291,10 @@ func TestTokenize_PathExpression(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -300,7 +304,7 @@ func TestTokenize_StringAndByteLiteral(t *testing.T) {
 		{
 			message: `quoted string`,
 			input:   "\"abc\"",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralQuoted,
 				tokenize.TokenEOF,
 			},
@@ -309,7 +313,7 @@ func TestTokenize_StringAndByteLiteral(t *testing.T) {
 		{
 			message: `quoted string`,
 			input:   "\"it's\"",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralQuoted,
 				tokenize.TokenEOF,
 			},
@@ -318,7 +322,7 @@ func TestTokenize_StringAndByteLiteral(t *testing.T) {
 		{
 			message: `quoted string`,
 			input:   "'it\\'s'",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralQuoted,
 				tokenize.TokenEOF,
 			},
@@ -327,7 +331,7 @@ func TestTokenize_StringAndByteLiteral(t *testing.T) {
 		{
 			message: `quoted string`,
 			input:   "'Title: \"Boy\"'",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralQuoted,
 				tokenize.TokenEOF,
 			},
@@ -336,7 +340,7 @@ func TestTokenize_StringAndByteLiteral(t *testing.T) {
 		{
 			message: `triple-quoted string`,
 			input:   "\"\"\"abc\"\"\"",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralQuoted,
 				tokenize.TokenEOF,
 			},
@@ -345,7 +349,7 @@ func TestTokenize_StringAndByteLiteral(t *testing.T) {
 		{
 			message: `triple-quoted string`,
 			input:   "'''it's'''",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralQuoted,
 				tokenize.TokenEOF,
 			},
@@ -354,7 +358,7 @@ func TestTokenize_StringAndByteLiteral(t *testing.T) {
 		{
 			message: `triple-quoted string`,
 			input:   "'''Title:\"Boy\"'''",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralQuoted,
 				tokenize.TokenEOF,
 			},
@@ -363,7 +367,7 @@ func TestTokenize_StringAndByteLiteral(t *testing.T) {
 		{
 			message: `triple-quoted string`,
 			input:   "'''two\nlines'''",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralQuoted,
 				tokenize.TokenEOF,
 			},
@@ -372,7 +376,7 @@ func TestTokenize_StringAndByteLiteral(t *testing.T) {
 		{
 			message: `triple-quoted string`,
 			input:   "'''why\\?'''",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralQuoted,
 				tokenize.TokenEOF,
 			},
@@ -381,7 +385,7 @@ func TestTokenize_StringAndByteLiteral(t *testing.T) {
 		{
 			message: `raw string`,
 			input:   "r\"abc+\"",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralQuoted,
 				tokenize.TokenEOF,
 			},
@@ -390,7 +394,7 @@ func TestTokenize_StringAndByteLiteral(t *testing.T) {
 		{
 			message: `raw string`,
 			input:   "r'''abc+'''",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralQuoted,
 				tokenize.TokenEOF,
 			},
@@ -399,7 +403,7 @@ func TestTokenize_StringAndByteLiteral(t *testing.T) {
 		{
 			message: `raw string`,
 			input:   "r\"\"\"abc+\"\"\"",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralQuoted,
 				tokenize.TokenEOF,
 			},
@@ -408,7 +412,7 @@ func TestTokenize_StringAndByteLiteral(t *testing.T) {
 		{
 			message: `raw string`,
 			input:   "r'f\\(abc,(.*),def\\)'",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralQuoted,
 				tokenize.TokenEOF,
 			},
@@ -417,7 +421,7 @@ func TestTokenize_StringAndByteLiteral(t *testing.T) {
 		{
 			message: `bytes`,
 			input:   "B\"abc\"",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralQuoted,
 				tokenize.TokenEOF,
 			},
@@ -426,7 +430,7 @@ func TestTokenize_StringAndByteLiteral(t *testing.T) {
 		{
 			message: `bytes`,
 			input:   "B'''abc'''",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralQuoted,
 				tokenize.TokenEOF,
 			},
@@ -435,7 +439,7 @@ func TestTokenize_StringAndByteLiteral(t *testing.T) {
 		{
 			message: `bytes`,
 			input:   "b\"\"\"abc\"\"\"",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralQuoted,
 				tokenize.TokenEOF,
 			},
@@ -444,7 +448,7 @@ func TestTokenize_StringAndByteLiteral(t *testing.T) {
 		{
 			message: `raw bytes`,
 			input:   "br'abc+'",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralQuoted,
 				tokenize.TokenEOF,
 			},
@@ -453,7 +457,7 @@ func TestTokenize_StringAndByteLiteral(t *testing.T) {
 		{
 			message: `raw bytes`,
 			input:   "RB\"abc+\"",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralQuoted,
 				tokenize.TokenEOF,
 			},
@@ -462,7 +466,7 @@ func TestTokenize_StringAndByteLiteral(t *testing.T) {
 		{
 			message: `raw bytes`,
 			input:   "RB'''abc'''",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralQuoted,
 				tokenize.TokenEOF,
 			},
@@ -470,8 +474,10 @@ func TestTokenize_StringAndByteLiteral(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -481,7 +487,7 @@ func TestTokenize_IntegerLiteral(t *testing.T) {
 		{
 			message: `integer`,
 			input:   "123",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralInteger,
 				tokenize.TokenEOF,
 			},
@@ -490,7 +496,7 @@ func TestTokenize_IntegerLiteral(t *testing.T) {
 		{
 			message: `integer`,
 			input:   "0xABC",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralInteger,
 				tokenize.TokenEOF,
 			},
@@ -499,7 +505,7 @@ func TestTokenize_IntegerLiteral(t *testing.T) {
 		{
 			message: `integer`,
 			input:   "-123",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenSpecialChar,
 				tokenize.TokenLiteralInteger,
 				tokenize.TokenEOF,
@@ -508,8 +514,10 @@ func TestTokenize_IntegerLiteral(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -519,7 +527,7 @@ func TestTokenize_NumericLiteral(t *testing.T) {
 		{
 			message: `numeric`,
 			input:   "SELECT NUMERIC '0';",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpace,
 				tokenize.TokenIdentifier,
@@ -533,7 +541,7 @@ func TestTokenize_NumericLiteral(t *testing.T) {
 		{
 			message: `numeric`,
 			input:   "SELECT NUMERIC '123456';",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpace,
 				tokenize.TokenIdentifier,
@@ -547,7 +555,7 @@ func TestTokenize_NumericLiteral(t *testing.T) {
 		{
 			message: `numeric`,
 			input:   "SELECT NUMERIC '-3.14';",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpace,
 				tokenize.TokenIdentifier,
@@ -561,7 +569,7 @@ func TestTokenize_NumericLiteral(t *testing.T) {
 		{
 			message: `numeric`,
 			input:   "SELECT NUMERIC '-0.54321';",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpace,
 				tokenize.TokenIdentifier,
@@ -575,7 +583,7 @@ func TestTokenize_NumericLiteral(t *testing.T) {
 		{
 			message: `numeric`,
 			input:   "SELECT NUMERIC '1.23456e05';",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpace,
 				tokenize.TokenIdentifier,
@@ -589,7 +597,7 @@ func TestTokenize_NumericLiteral(t *testing.T) {
 		{
 			message: `numeric`,
 			input:   "SELECT NUMERIC '-9.876e-3';",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpace,
 				tokenize.TokenIdentifier,
@@ -602,8 +610,10 @@ func TestTokenize_NumericLiteral(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -613,7 +623,7 @@ func TestTokenize_FloatLiteral(t *testing.T) {
 		{
 			message: `float`,
 			input:   "123.456e-67",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralFloat,
 				tokenize.TokenEOF,
 			},
@@ -622,7 +632,7 @@ func TestTokenize_FloatLiteral(t *testing.T) {
 		{
 			message: `float`,
 			input:   ".1E4",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralFloat,
 				tokenize.TokenEOF,
 			},
@@ -631,7 +641,7 @@ func TestTokenize_FloatLiteral(t *testing.T) {
 		{
 			message: `float`,
 			input:   "58.",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralFloat,
 				tokenize.TokenEOF,
 			},
@@ -640,7 +650,7 @@ func TestTokenize_FloatLiteral(t *testing.T) {
 		{
 			message: `float`,
 			input:   "4e2",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenLiteralFloat,
 				tokenize.TokenEOF,
 			},
@@ -648,8 +658,10 @@ func TestTokenize_FloatLiteral(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -659,7 +671,7 @@ func TestTokenize_ArrayLiteral(t *testing.T) {
 		{
 			message: `array of integers`,
 			input:   "[1, 2, 3]",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenSpecialChar,
 				tokenize.TokenLiteralInteger,
 				tokenize.TokenSpecialChar,
@@ -676,7 +688,7 @@ func TestTokenize_ArrayLiteral(t *testing.T) {
 		{
 			message: `array of strings`,
 			input:   "['x', 'y', 'xy']",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenSpecialChar,
 				tokenize.TokenLiteralQuoted,
 				tokenize.TokenSpecialChar,
@@ -693,7 +705,7 @@ func TestTokenize_ArrayLiteral(t *testing.T) {
 		{
 			message: `array of integers`,
 			input:   "ARRAY[1, 2, 3]",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpecialChar,
 				tokenize.TokenLiteralInteger,
@@ -711,7 +723,7 @@ func TestTokenize_ArrayLiteral(t *testing.T) {
 		{
 			message: `array of strings`,
 			input:   "ARRAY<string>['x', 'y', 'xy']",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpecialChar,
 				tokenize.TokenIdentifier,
@@ -732,7 +744,7 @@ func TestTokenize_ArrayLiteral(t *testing.T) {
 		{
 			message: `array of integers`,
 			input:   "ARRAY<int64>[]",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpecialChar,
 				tokenize.TokenIdentifier,
@@ -745,8 +757,10 @@ func TestTokenize_ArrayLiteral(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -756,7 +770,7 @@ func TestTokenize_Struct(t *testing.T) {
 		{
 			message: `struct value`,
 			input:   "(1, 2, 3)",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenSpecialChar,
 				tokenize.TokenLiteralInteger,
 				tokenize.TokenSpecialChar,
@@ -773,7 +787,7 @@ func TestTokenize_Struct(t *testing.T) {
 		{
 			message: `struct value`,
 			input:   "(1, 'abc')",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenSpecialChar,
 				tokenize.TokenLiteralInteger,
 				tokenize.TokenSpecialChar,
@@ -787,7 +801,7 @@ func TestTokenize_Struct(t *testing.T) {
 		{
 			message: `struct value`,
 			input:   "STRUCT(1 AS foo, 'abc' AS bar)",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpecialChar,
 				tokenize.TokenLiteralInteger,
@@ -810,7 +824,7 @@ func TestTokenize_Struct(t *testing.T) {
 		{
 			message: `struct value`,
 			input:   "STRUCT<INT64, STRING>(1, 'abc')",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpecialChar,
 				tokenize.TokenIdentifier,
@@ -831,7 +845,7 @@ func TestTokenize_Struct(t *testing.T) {
 		{
 			message: `struct value`,
 			input:   "STRUCT(1)",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpecialChar,
 				tokenize.TokenLiteralInteger,
@@ -843,7 +857,7 @@ func TestTokenize_Struct(t *testing.T) {
 		{
 			message: `struct value`,
 			input:   "STRUCT<INT64>(1)",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpecialChar,
 				tokenize.TokenIdentifier,
@@ -858,7 +872,7 @@ func TestTokenize_Struct(t *testing.T) {
 		{
 			message: `struct type`,
 			input:   "STRUCT<INT64, INT64, INT64>",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpecialChar,
 				tokenize.TokenIdentifier,
@@ -876,7 +890,7 @@ func TestTokenize_Struct(t *testing.T) {
 		{
 			message: `struct type`,
 			input:   "STRUCT<foo INT64, bar STRING>",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpecialChar,
 				tokenize.TokenIdentifier,
@@ -894,8 +908,10 @@ func TestTokenize_Struct(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -905,7 +921,7 @@ func TestTokenize_Date_Timestamp_JSON(t *testing.T) {
 		{
 			message: `date`,
 			input:   "DATE '2014-09-27'",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenIdentifier,
 				tokenize.TokenSpace,
 				tokenize.TokenLiteralQuoted,
@@ -916,7 +932,7 @@ func TestTokenize_Date_Timestamp_JSON(t *testing.T) {
 		{
 			message: `statement using date`,
 			input:   "SELECT * FROM foo WHERE date_col = \"2014-09-27\"",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpace,
 				tokenize.TokenSpecialChar,
@@ -940,7 +956,7 @@ func TestTokenize_Date_Timestamp_JSON(t *testing.T) {
 		{
 			message: `timestamp`,
 			input:   "TIMESTAMP '2014-09-27 12:30:00.45-08'",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenIdentifier,
 				tokenize.TokenSpace,
 				tokenize.TokenLiteralQuoted,
@@ -951,7 +967,7 @@ func TestTokenize_Date_Timestamp_JSON(t *testing.T) {
 		{
 			message: `statement using timestamp`,
 			input:   "SELECT * FROM foo\nWHERE timestamp_col = \"2014-09-27 12:30:00.45 America/Los_Angeles\"",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpace,
 				tokenize.TokenSpecialChar,
@@ -975,7 +991,7 @@ func TestTokenize_Date_Timestamp_JSON(t *testing.T) {
 		{
 			message: `JSON`,
 			input:   "JSON '\n{\n  \"id\": 10,\n  \"type\": \"fruit\",\n  \"name\": \"apple\",\n  \"on_menu\": true,\n  \"recipes\":\n    {\n      \"salads\":\n      [\n        { \"id\": 2001, \"type\": \"Walnut Apple Salad\" },\n        { \"id\": 2002, \"type\": \"Apple Spinach Salad\" }\n      ],\n      \"desserts\":\n      [\n        { \"id\": 3001, \"type\": \"Apple Pie\" },\n        { \"id\": 3002, \"type\": \"Apple Scones\" },\n        { \"id\": 3003, \"type\": \"Apple Crumble\" }\n      ]\n    }\n}\n'",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenIdentifier,
 				tokenize.TokenSpace,
 				tokenize.TokenLiteralQuoted,
@@ -985,8 +1001,10 @@ func TestTokenize_Date_Timestamp_JSON(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -996,7 +1014,7 @@ func TestTokenize_Parameter(t *testing.T) {
 		{
 			message: `parameter`,
 			input:   "SELECT * FROM Roster WHERE LastName = @myparam",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpace,
 				tokenize.TokenSpecialChar,
@@ -1019,8 +1037,10 @@ func TestTokenize_Parameter(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -1030,7 +1050,7 @@ func TestTokenize_Hint(t *testing.T) {
 		{
 			message: `hint`,
 			input:   "@{ database_engine_a.file_count=23, database_engine_b.file_count=10 }",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenSpecialChar,
 				tokenize.TokenSpecialChar,
 				tokenize.TokenSpace,
@@ -1054,8 +1074,10 @@ func TestTokenize_Hint(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }
 
@@ -1065,7 +1087,7 @@ func TestTokenize_Comment(t *testing.T) {
 		{
 			message: `single line comment with #`,
 			input:   "# this is a single-line comment\nSELECT book FROM library;",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenComment,
 				tokenize.TokenKeyword,
 				tokenize.TokenSpace,
@@ -1082,7 +1104,7 @@ func TestTokenize_Comment(t *testing.T) {
 		{
 			message: `single line comment with --`,
 			input:   "-- this is a single-line comment\nSELECT book FROM library;",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenComment,
 				tokenize.TokenKeyword,
 				tokenize.TokenSpace,
@@ -1099,7 +1121,7 @@ func TestTokenize_Comment(t *testing.T) {
 		{
 			message: `single line comment with /* and */`,
 			input:   "/* this is a single-line comment */\nSELECT book FROM library;",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenComment,
 				tokenize.TokenSpace,
 				tokenize.TokenKeyword,
@@ -1117,7 +1139,7 @@ func TestTokenize_Comment(t *testing.T) {
 		{
 			message: `single line comment with /* and */`,
 			input:   "SELECT book FROM library\n/* this is a single-line comment */\nWHERE book = \"Ulysses\";",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpace,
 				tokenize.TokenIdentifier,
@@ -1143,7 +1165,7 @@ func TestTokenize_Comment(t *testing.T) {
 		{
 			message: `inline comment with #`,
 			input:   "SELECT book FROM library; # this is an inline comment",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpace,
 				tokenize.TokenIdentifier,
@@ -1161,7 +1183,7 @@ func TestTokenize_Comment(t *testing.T) {
 		{
 			message: `inline comment with --`,
 			input:   "SELECT book FROM library; -- this is an inline comment",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpace,
 				tokenize.TokenIdentifier,
@@ -1179,7 +1201,7 @@ func TestTokenize_Comment(t *testing.T) {
 		{
 			message: `inline comment with /* and */`,
 			input:   "SELECT book FROM library; /* this is an inline comment */",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpace,
 				tokenize.TokenIdentifier,
@@ -1197,7 +1219,7 @@ func TestTokenize_Comment(t *testing.T) {
 		{
 			message: `inline comment with /* and */`,
 			input:   "SELECT book FROM library /* this is an inline comment */ WHERE book = \"Ulysses\";",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpace,
 				tokenize.TokenIdentifier,
@@ -1223,7 +1245,7 @@ func TestTokenize_Comment(t *testing.T) {
 		{
 			message: `multiline comment with /* and */`,
 			input:   "SELECT book FROM library\n/*\n  This is a multiline comment\n  on multiple lines\n*/\nWHERE book = \"Ulysses\";",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpace,
 				tokenize.TokenIdentifier,
@@ -1249,7 +1271,7 @@ func TestTokenize_Comment(t *testing.T) {
 		{
 			message: `multiline comment with /* and */`,
 			input:   "SELECT book FROM library\n/* this is a multiline comment\non two lines */\nWHERE book = \"Ulysses\";",
-			wantTokens: []tokenize.TokenCode{
+			wantTokens: []tokenize.TokenKind{
 				tokenize.TokenKeyword,
 				tokenize.TokenSpace,
 				tokenize.TokenIdentifier,
@@ -1274,7 +1296,9 @@ func TestTokenize_Comment(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		testTokenize(t, testcase)
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			testTokenize(t, testcase)
+		})
 	}
 }

@@ -71,13 +71,13 @@ func (s *TokenScanner) Init(input []rune) {
 }
 
 // ScanNext scans the next token in the input sequence and returns the Token and an error if any occurs during processing.
-// If the end of the input sequence is reached, the method returns a special Token with TokenCode TokenEOF to indicate the end of the file.
+// If the end of the input sequence is reached, the method returns a special Token with TokenKind TokenEOF to indicate the end of the file.
 func (s *TokenScanner) ScanNext() (Token, error) {
 	if s.Len() == 0 {
 		return s.accept(0, TokenEOF), nil
 	}
 
-	type scanFunc func(s *ScanState) (int, TokenCode, error)
+	type scanFunc func(s *ScanState) (int, TokenKind, error)
 	var scanners = []scanFunc{
 		/* scanFunc in front have higher priority than those behind. */
 		Spaces,
@@ -90,22 +90,22 @@ func (s *TokenScanner) ScanNext() (Token, error) {
 	}
 
 	for _, scanner := range scanners {
-		size, code, err := scanner(&s.ScanState)
+		size, kind, err := scanner(&s.ScanState)
 		if err != nil {
 			return Token{}, s.wrapErr(err)
 		}
-		if code != TokenUnspecified {
-			return s.accept(size, code), nil
+		if kind != TokenUnspecified {
+			return s.accept(size, kind), nil
 		}
 	}
 
 	return Token{}, s.wrapErr(fmt.Errorf(`invalid character sequense`))
 }
 
-func (s *TokenScanner) accept(n int, code TokenCode) Token {
+func (s *TokenScanner) accept(n int, kind TokenKind) Token {
 	out := s.Input[s.Cursor : s.Cursor+n]
 	token := Token{
-		Code:    code,
+		Kind:    kind,
 		Content: out,
 		Begin:   s.Cursor,
 		End:     s.Cursor + n,
@@ -133,7 +133,7 @@ func (s *TokenScanner) wrapErr(err error) error {
 		sizeBefore = s.Cursor
 	}
 	input := string(s.Input[s.Cursor-sizeBefore : s.Cursor+sizeAfter])
-	return fmt.Errorf(`fail to scan token at line %d column %d near ...%s...: %w`, s.lines, s.columns, input, err)
+	return fmt.Errorf(`fail to scan token at line %d column %d near ...%q...: %w`, s.lines, s.columns, input, err)
 }
 
 // Tokenize returns a slice of Token representing the identified tokens in the input sequence.
@@ -148,7 +148,7 @@ func Tokenize(input []rune) ([]Token, error) {
 			return nil, fmt.Errorf(`fail to tokenize: %w`, err)
 		}
 		tokens = append(tokens, token)
-		if token.Code == TokenEOF {
+		if token.Kind == TokenEOF {
 			return tokens, nil
 		}
 	}
