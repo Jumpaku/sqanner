@@ -2,8 +2,8 @@ package parser_test
 
 import (
 	"fmt"
-	"github.com/Jumpaku/sqanner/parse/node"
-	"github.com/Jumpaku/sqanner/parse/parser"
+	"github.com/Jumpaku/sqanner/old_parse/node"
+	"github.com/Jumpaku/sqanner/old_parse/parser"
 	"github.com/Jumpaku/sqanner/tokenize"
 	"testing"
 )

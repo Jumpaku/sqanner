@@ -1,7 +1,7 @@
 package stack_test
 
 import (
-	"github.com/Jumpaku/sqanner/parse/stack"
+	"github.com/Jumpaku/sqanner/old_parse/stack"
 	"testing"
 )
 

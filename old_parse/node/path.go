@@ -8,14 +8,14 @@ type PathNode interface {
 func Path(identifiers []IdentifierNode) NewNodeFunc[PathNode] {
 	return func(begin, end int) PathNode {
 		return path{
-			nodeBase:    nodeBase{kind: KindPath, begin: begin, end: end},
+			NodeBase:    NodeBase{kind: KindPath, begin: begin, end: end},
 			identifiers: identifiers,
 		}
 	}
 }
 
 type path struct {
-	nodeBase
+	NodeBase
 	identifiers []IdentifierNode
 }
 
