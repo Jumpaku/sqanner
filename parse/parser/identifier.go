@@ -2,18 +2,24 @@ package parser
 
 import (
 	"fmt"
+	"github.com/Jumpaku/sqanner/parse"
 	"github.com/Jumpaku/sqanner/parse/node"
 	"github.com/Jumpaku/sqanner/tokenize"
 )
 
-func ParseIdentifier(s *ParseState) (node.IdentifierNode, error) {
-	s.SkipSpacesAndComments()
+func ParseIdentifier(s *parse.ParseState) (*node.IdentifierNode, error) {
+	s.Skip()
 
 	t := s.PeekAt(0)
-	if !IsAnyKind(t, tokenize.TokenIdentifier, tokenize.TokenIdentifierQuoted) {
-		return nil, Error(s, fmt.Errorf(`quoted or unquoted identifier not found`))
+	if !parse.IsAnyKind(t, tokenize.TokenIdentifier, tokenize.TokenIdentifierQuoted) {
+		return nil, s.WrapError(fmt.Errorf(`quoted or unquoted identifier not found`))
+	}
+
+	content := string(t.Content)
+	if parse.IsAKeyword(content) {
+		return nil, s.WrapError(fmt.Errorf(`keyword is not identifier`))
 	}
 	s.Move(1)
 
-	return Accept(s, node.Identifier(string(t.Content))), nil
+	return node.AcceptIdentifier(s, content), nil
 }

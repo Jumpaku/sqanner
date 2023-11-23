@@ -1,50 +1,50 @@
 package node
 
 import (
+	"github.com/Jumpaku/sqanner/parse"
 	"strings"
 )
 
-type IdentifierNode interface {
-	Node
+type identifierNode interface {
 	Value() string
 	IsQuoted() bool
 	UnquotedValue() string
 }
 
-func Identifier(value string) NewNodeFunc[IdentifierNode] {
-	return func(begin, end int) IdentifierNode {
-		return identifier{
-			nodeBase: nodeBase{kind: KindIdentifier, begin: begin, end: end},
-			value:    value,
-		}
-	}
-}
+var _ Node = (*IdentifierNode)(nil)
+var _ identifierNode = (*IdentifierNode)(nil)
 
-type identifier struct {
-	nodeBase
+type IdentifierNode struct {
+	NodeBase
 	value string
 }
 
-var (
-	_ Node           = identifier{}
-	_ IdentifierNode = identifier{}
-)
-
-func (n identifier) Children() []Node {
-	return nil
+func AcceptIdentifier(s *parse.ParseState, value string) *IdentifierNode {
+	return &IdentifierNode{
+		NodeBase: NewNodeBase(s.Begin(), s.End()),
+		value:    value,
+	}
 }
 
-func (n identifier) Value() string {
+func NewIdentifier(value string) *IdentifierNode {
+	return &IdentifierNode{value: value}
+}
+
+func (n *IdentifierNode) Value() string {
 	return n.value
 }
 
-func (n identifier) IsQuoted() bool {
+func (n *IdentifierNode) IsQuoted() bool {
 	return strings.HasPrefix(n.Value(), "`")
 }
 
-func (n identifier) UnquotedValue() string {
+func (n *IdentifierNode) UnquotedValue() string {
 	if n.IsQuoted() {
 		return n.Value()
 	}
 	return n.value[1 : len(n.value)-1]
+}
+
+func (n *IdentifierNode) Children() []Node {
+	return nil
 }

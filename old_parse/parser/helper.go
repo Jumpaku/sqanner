@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"github.com/Jumpaku/sqanner/parse/node"
+	"github.com/Jumpaku/sqanner/old_parse/node"
 	"github.com/Jumpaku/sqanner/tokenize"
 	"golang.org/x/exp/slices"
 	"strings"
