@@ -15,12 +15,17 @@ func NewParseState(input []tokenize.Token) *ParseState {
 	return &ParseState{input: input}
 }
 
-func (s *ParseState) Child() *ParseState {
+func (s *ParseState) clone() *ParseState {
 	return &ParseState{
 		input:  s.input,
-		begin:  s.cursor,
+		begin:  s.begin,
 		cursor: s.cursor,
 	}
+}
+func (s *ParseState) Child() *ParseState {
+	child := s.clone()
+	child.begin = s.cursor
+	return child
 }
 
 func (s *ParseState) PeekAt(offset int) tokenize.Token {
@@ -37,7 +42,7 @@ func (s *ParseState) Move(offset int) {
 
 func (s *ParseState) Skip() {
 	offset := 0
-	for offset < s.Len() && IsAnyKind(s.PeekAt(offset), tokenize.TokenComment, tokenize.TokenSpace) {
+	for offset < s.Len() && MatchAnyTokenKind(s.PeekAt(offset), tokenize.TokenComment, tokenize.TokenSpace) {
 		offset++
 	}
 	s.Move(offset)
