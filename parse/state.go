@@ -1,8 +1,7 @@
-package parser
+package parse
 
 import (
 	"fmt"
-	"github.com/Jumpaku/sqanner/parse/node"
 	"github.com/Jumpaku/sqanner/tokenize"
 )
 
@@ -36,15 +35,21 @@ func (s *ParseState) Move(offset int) {
 	s.cursor += offset
 }
 
-func (s *ParseState) SkipSpacesAndComments() {
+func (s *ParseState) Skip() {
 	offset := 0
 	for offset < s.Len() && IsAnyKind(s.PeekAt(offset), tokenize.TokenComment, tokenize.TokenSpace) {
 		offset++
 	}
 	s.Move(offset)
 }
+func (s *ParseState) Begin() int {
+	return s.begin
+}
+func (s *ParseState) End() int {
+	return s.cursor
+}
 
-func Error(s *ParseState, err error) error {
+func (s *ParseState) WrapError(err error) error {
 	t := s.PeekAt(0)
 
 	begin := s.cursor
@@ -63,8 +68,4 @@ func Error(s *ParseState, err error) error {
 	}
 
 	return fmt.Errorf(`fail to parse during processing tokens near ...%v...: line=%d, column=%d: %w`, contents, t.Line, t.Column, err)
-}
-
-func Accept[T node.Node](s *ParseState, nodeFunc node.NewNodeFunc[T]) T {
-	return nodeFunc(s.begin, s.cursor)
 }

@@ -1,6 +1,9 @@
 package node
 
+type NewNodeFunc[T Node] func(begin int, end int) T
+
 type Node interface {
+	Kind() Kind
 	Begin() int
 	End() int
 	Len() int
@@ -10,9 +13,12 @@ type Node interface {
 type NodeBase struct {
 	begin int
 	end   int
+	kind  Kind
 }
 
-func NewNodeBase(begin, end int) NodeBase { return NodeBase{begin: begin, end: end} }
+func (n NodeBase) Kind() Kind {
+	return n.kind
+}
 
 func (n NodeBase) Begin() int {
 	return n.begin

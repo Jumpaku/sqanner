@@ -317,14 +317,14 @@ type KeywordNode interface {
 func Keyword(code KeywordCode) NewNodeFunc[KeywordNode] {
 	return func(begin, end int) KeywordNode {
 		return keyword{
-			nodeBase: nodeBase{kind: KindKeyword, begin: begin, end: end},
+			NodeBase: NodeBase{kind: KindKeyword, begin: begin, end: end},
 			code:     code,
 		}
 	}
 }
 
 type keyword struct {
-	nodeBase
+	NodeBase
 	code KeywordCode
 }
 

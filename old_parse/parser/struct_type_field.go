@@ -2,7 +2,7 @@ package parser
 
 import (
 	"fmt"
-	"github.com/Jumpaku/sqanner/parse/node"
+	"github.com/Jumpaku/sqanner/old_parse/node"
 )
 
 func ParseStructField(s *ParseState) (node.StructTypeFieldNode, error) {
