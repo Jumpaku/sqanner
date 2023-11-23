@@ -176,6 +176,9 @@ func assertNodeMatch[T node.Node](t *testing.T, want T, got T, failMsg string) {
 			assertNodeMatch(t, w.Name(), g.Name(), failMsg)
 		}
 		assertNodeMatch(t, w.Type(), g.Type(), failMsg)
+	case node.KeywordNode:
+		w, g := cast[node.KeywordNode](want, got)
+		assert.Equal(t, w.KeywordCode(), g.KeywordCode(), failMsg)
 	}
 }
 
