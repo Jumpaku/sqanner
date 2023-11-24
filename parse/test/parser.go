@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Jumpaku/sqanner/parse"
 	"github.com/Jumpaku/sqanner/parse/node"
+	"github.com/Jumpaku/sqanner/parse/node/ddl/expr"
 	"github.com/Jumpaku/sqanner/parse/node/types"
 	"github.com/Jumpaku/sqanner/parse/parser"
 	"github.com/Jumpaku/sqanner/tokenize"
@@ -137,10 +138,8 @@ func assertNodeMatch[T node.Node](t *testing.T, want T, got T, failMsg string) {
 	case node.IdentifierNode:
 		w, g := cast[node.IdentifierNode](want, got)
 		assert.Equal(t, w.Value(), g.Value(), failMsg)
-		assert.Equal(t, w.IsQuoted(), g.IsQuoted(), failMsg)
-		if w.IsQuoted() {
-			assert.Equal(t, w.UnquotedValue(), g.UnquotedValue(), failMsg)
-		}
+		assert.Equal(t, w.RequiresQuotes(), g.RequiresQuotes(), failMsg)
+		assert.Equal(t, w.QuotedValue(), g.QuotedValue(), failMsg)
 	case types.TypeNode:
 		w, g := cast[types.TypeNode](want, got)
 		assert.Equal(t, w.TypeCode(), g.TypeCode(), failMsg)
@@ -179,6 +178,30 @@ func assertNodeMatch[T node.Node](t *testing.T, want T, got T, failMsg string) {
 	case node.KeywordNode:
 		w, g := cast[node.KeywordNode](want, got)
 		assert.Equal(t, w.KeywordCode(), g.KeywordCode(), failMsg)
+	case expr.ScalarNode:
+		w, g := cast[expr.ScalarNode](want, got)
+		assert.Equal(t, w.Type(), g.Type(), failMsg)
+		switch w.Type() {
+		case types.TypeCodeBool:
+			assert.Equal(t, w.BoolValue(), g.BoolValue(), failMsg)
+		case types.TypeCodeInt64:
+			assert.Equal(t, w.Int64Value(), g.Int64Value(), failMsg)
+		case types.TypeCodeFloat64:
+			assert.Equal(t, w.Float64Value(), g.Float64Value(), failMsg)
+		case types.TypeCodeString:
+			assert.Equal(t, w.StringValue(), g.StringValue(), failMsg)
+		case types.TypeCodeBytes:
+			assert.Equal(t, w.BytesValue(), g.BytesValue(), failMsg)
+		case types.TypeCodeDate:
+			assert.Equal(t, w.DateValue(), g.DateValue(), failMsg)
+		case types.TypeCodeTimestamp:
+			assert.Equal(t, w.TimestampValue(), g.TimestampValue(), failMsg)
+		case types.TypeCodeJSON:
+			assert.Equal(t, w.JSONValue(), g.JSONValue(), failMsg)
+		case types.TypeCodeNumeric:
+			assert.Equal(t, w.NumericValue(), g.NumericValue(), failMsg)
+
+		}
 	}
 }
 

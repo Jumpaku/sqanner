@@ -16,5 +16,11 @@ func ParseIdentifier(s *parse.ParseState) (node.IdentifierNode, error) {
 	}
 	s.Move(1)
 
-	return node.AcceptIdentifier(s, string(t.Content)), nil
+	unquoted := string(t.Content)
+	requiresQuotes := t.Kind == tokenize.TokenIdentifierQuoted
+	if requiresQuotes {
+		unquoted = unquoted[1 : len(unquoted)-1]
+	}
+
+	return node.AcceptIdentifier(s, unquoted, requiresQuotes), nil
 }

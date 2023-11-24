@@ -57,14 +57,14 @@ func (s *ParseState) End() int {
 func (s *ParseState) WrapError(err error) error {
 	t := s.PeekAt(0)
 
-	begin := s.cursor
-	if begin > 0 {
-		begin--
+	begin := s.cursor - 1
+	if begin < 0 {
+		begin = 0
 	}
 
-	end := s.cursor + 1
-	if s.Len() > 0 {
-		end++
+	end := s.cursor + 2
+	if end > len(s.input) {
+		end = len(s.input)
 	}
 
 	var contents []string

@@ -24,7 +24,7 @@ func Spaces(s *ScanState) (int, TokenKind, error) {
 // It returns the count of runes in the scanned comment token and the corresponding TokenKind.
 // If no comments are found at the current Cursor position, the function returns 0 for the count and TokenUnspecified for the TokenKind.
 // If the comment starts with '#' and extends to the end of the line, the function returns the count of runes up to the newline character.
-// If the comment starts with '//' or '--' and extends to the end of the line, the function returns the count of runes up to the newline character.
+// If the comment starts with '--' and extends to the end of the line, the function returns the count of runes up to the newline character.
 // If the comment starts with '/*' and ends with '*/', the function returns the count of runes up to the closing '*/' sequence.
 // If the comment is not properly terminated with '*/', the function returns an error with a message indicating an incomplete comment.
 func Comment(s *ScanState) (int, TokenKind, error) {
@@ -235,7 +235,8 @@ func IdentifierOrKeyword(s *ScanState) (int, TokenKind, error) {
 // It returns the count of runes in the scanned number or dot operator, the corresponding TokenKind, and an error if any occurs during processing.
 // If no number or dot operator is found at the current Cursor position, the function returns 0 for the count, TokenUnspecified for the TokenKind, and nil for the error.
 // The function recognizes hexadecimal integers (starting with "0x"), decimals (with or without a decimal point), and floating-point numbers (with or without an exponent using 'e' or 'E').
-// If the scanned token is the dot (.) operator, the function returns 1 for the count and TokenKind TokenSpecialChar.
+// The function does not allow sign (- or +) prefix for numbers.
+// If the scanned token is a dot (.) operator, the function returns 1 for the count and TokenKind TokenSpecialChar.
 // If the scanned token is an integer (either decimal or hexadecimal), the function returns the count of runes in the scanned integer and TokenKind TokenLiteralInteger.
 // If the scanned token is a floating-point number, the function returns the count of runes in the scanned number and TokenKind TokenLiteralFloat.
 func NumberOrDot(s *ScanState) (int, TokenKind, error) {

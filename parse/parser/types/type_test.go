@@ -467,8 +467,8 @@ func TestParseType_Struct(t *testing.T) {
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
 			WantNode: types.NewStruct([]types.StructFieldNode{
-				types.NewStructField(node.NewIdentifier("a"), types.NewInt64()),
-				types.NewStructField(node.NewIdentifier("b"), types.NewString()),
+				types.NewStructField(node.NewIdentifier("a", false), types.NewInt64()),
+				types.NewStructField(node.NewIdentifier("b", false), types.NewString()),
 			}),
 		},
 	}
@@ -505,10 +505,10 @@ func TestParseType_Complex(t *testing.T) {
 			},
 			WantNode: types.NewStruct([]types.StructFieldNode{
 				types.NewStructField(
-					node.NewIdentifier("x"),
+					node.NewIdentifier("x", false),
 					types.NewStruct([]types.StructFieldNode{
-						types.NewStructField(node.NewIdentifier("y"), types.NewInt64()),
-						types.NewStructField(node.NewIdentifier("z"), types.NewInt64()),
+						types.NewStructField(node.NewIdentifier("y", false), types.NewInt64()),
+						types.NewStructField(node.NewIdentifier("z", false), types.NewInt64()),
 					})),
 			}),
 		},
@@ -528,7 +528,7 @@ func TestParseType_Complex(t *testing.T) {
 			},
 			WantNode: types.NewStruct([]types.StructFieldNode{
 				types.NewStructField(
-					node.NewIdentifier("inner_array"),
+					node.NewIdentifier("inner_array", false),
 					types.NewArray(types.NewInt64())),
 			}),
 		},

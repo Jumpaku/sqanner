@@ -3,6 +3,7 @@ package tokenize_test
 import (
 	"fmt"
 	"github.com/Jumpaku/sqanner/tokenize"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -1299,6 +1300,148 @@ func TestTokenize_Comment(t *testing.T) {
 	for i, testcase := range testcases {
 		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
 			testTokenize(t, testcase)
+		})
+	}
+}
+
+func TestScanNext(t *testing.T) {
+	testcases := []struct {
+		message   string
+		kind      tokenize.TokenKind
+		input     string
+		want      string
+		shouldErr bool
+	}{
+		{
+			message: `EOF`,
+			kind:    tokenize.TokenEOF,
+			input:   ``,
+			want:    ``,
+		},
+		{
+			message: `comment`,
+			kind:    tokenize.TokenComment,
+			input:   "-- comment\n not comment",
+			want:    "-- comment\n",
+		},
+		{
+			message: `comment`,
+			kind:    tokenize.TokenComment,
+			input:   "-- comment",
+			want:    `-- comment`,
+		},
+		{
+			message: `comment`,
+			kind:    tokenize.TokenComment,
+			input:   "# comment\n not comment",
+			want:    "# comment\n",
+		},
+		{
+			message: `comment`,
+			kind:    tokenize.TokenComment,
+			input:   "# comment",
+			want:    `# comment`,
+		},
+		{
+			message: `comment`,
+			kind:    tokenize.TokenComment,
+			input:   `/* comment */`,
+			want:    `/* comment */`,
+		},
+		{
+			message: `comment`,
+			kind:    tokenize.TokenComment,
+			input:   `/* comment */ not comment`,
+			want:    `/* comment */`,
+		},
+		{
+			message: `float literal`,
+			kind:    tokenize.TokenLiteralFloat,
+			input:   `.0e123 not literal`,
+			want:    `.0e123`,
+		},
+		{
+			message: `integer literal`,
+			kind:    tokenize.TokenLiteralInteger,
+			input:   `123 not literal`,
+			want:    `123`,
+		},
+		{
+			message: `keyword`,
+			kind:    tokenize.TokenKeyword,
+			input:   `GROUP not keyword`,
+			want:    `GROUP`,
+		},
+		{
+			message: `quoted literal`,
+			kind:    tokenize.TokenLiteralQuoted,
+			input:   `rb"ab'c" not literal`,
+			want:    `rb"ab'c"`,
+		},
+		{
+			message: `quoted literal`,
+			kind:    tokenize.TokenLiteralQuoted,
+			input:   `BR'''ab'c''' not literal`,
+			want:    `BR'''ab'c'''`,
+		},
+		{
+			message: `quoted identifier`,
+			kind:    tokenize.TokenIdentifierQuoted,
+			input:   "`GROUP` not identifier",
+			want:    "`GROUP`",
+		},
+		{
+			message: `identifier`,
+			kind:    tokenize.TokenIdentifier,
+			input:   "ABC not identifier",
+			want:    "ABC",
+		},
+		{
+			message: `empty spaces`,
+			kind:    tokenize.TokenSpace,
+			input:   "ABC",
+			want:    "",
+		},
+		{
+			message: `spaces`,
+			kind:    tokenize.TokenSpace,
+			input:   " \n\t ABC",
+			want:    " \n\t ",
+		},
+		{
+			message: `dot`,
+			kind:    tokenize.TokenSpecialChar,
+			input:   ".`123`",
+			want:    ".",
+		},
+		{
+			message: `minus`,
+			kind:    tokenize.TokenSpecialChar,
+			input:   "-123",
+			want:    "-",
+		},
+		{
+			message: `slash`,
+			kind:    tokenize.TokenSpecialChar,
+			input:   "/abc",
+			want:    "/",
+		},
+		{
+			message: `plus`,
+			kind:    tokenize.TokenSpecialChar,
+			input:   "+123",
+			want:    "+",
+		},
+	}
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
+			got, err := tokenize.ScanNext([]rune(testcase.input), testcase.kind)
+			if testcase.shouldErr {
+				assert.NotNil(t, err)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, testcase.want, string(got))
+			}
 		})
 	}
 }

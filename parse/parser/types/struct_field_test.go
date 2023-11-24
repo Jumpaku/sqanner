@@ -60,7 +60,7 @@ func TestParseStructField(t *testing.T) {
 				{Kind: tokenize.TokenIdentifier, Content: []rune(`INT64`)},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: types.NewStructField(node.NewIdentifier(`abc`), types.NewInt64()),
+			WantNode: types.NewStructField(node.NewIdentifier(`abc`, false), types.NewInt64()),
 		},
 		{
 			Message: `named field`,
@@ -69,7 +69,7 @@ func TestParseStructField(t *testing.T) {
 				{Kind: tokenize.TokenIdentifier, Content: []rune(`STRING`)},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: types.NewStructField(node.NewIdentifier(`abc`), types.NewString()),
+			WantNode: types.NewStructField(node.NewIdentifier(`abc`, false), types.NewString()),
 		},
 		{
 			Message: `named field`,
@@ -81,7 +81,7 @@ func TestParseStructField(t *testing.T) {
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(`)`)},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: types.NewStructField(node.NewIdentifier(`abc`), types.NewStringSized(types.NewTypeSizeMax())),
+			WantNode: types.NewStructField(node.NewIdentifier(`abc`, false), types.NewStringSized(types.NewTypeSizeMax())),
 		},
 		{
 			Message: `named field`,
@@ -96,7 +96,7 @@ func TestParseStructField(t *testing.T) {
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(`>`)},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: types.NewStructField(node.NewIdentifier(`abc`), types.NewArray(types.NewStringSized(types.NewTypeSizeMax()))),
+			WantNode: types.NewStructField(node.NewIdentifier(`abc`, false), types.NewArray(types.NewStringSized(types.NewTypeSizeMax()))),
 		},
 		{
 			Message: `with spaces`,
@@ -120,7 +120,7 @@ func TestParseStructField(t *testing.T) {
 				{Kind: tokenize.TokenSpace, Content: []rune(` `)},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: types.NewStructField(node.NewIdentifier(`abc`), types.NewArray(types.NewStringSized(types.NewTypeSizeMax()))),
+			WantNode: types.NewStructField(node.NewIdentifier(`abc`, false), types.NewArray(types.NewStringSized(types.NewTypeSizeMax()))),
 		},
 	}
 
