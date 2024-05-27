@@ -2,6 +2,7 @@ package parser_test
 
 import (
 	"fmt"
+	"github.com/Jumpaku/sqanner/parse"
 	"github.com/Jumpaku/sqanner/parse/node"
 	"github.com/Jumpaku/sqanner/parse/parser"
 	"github.com/Jumpaku/sqanner/parse/test"
@@ -9,53 +10,52 @@ import (
 	"testing"
 )
 
-func TestParseIdentifier(t *testing.T) {
-	testcases := []test.Case[node.IdentifierNode]{
+func TestParseKeyword(t *testing.T) {
+	testcases := []test.Case[node.KeywordNode]{
 		{
-			Message: `unquoted identifier`,
+			Message: `keyword`,
 			Input: []tokenize.Token{
-				{Kind: tokenize.TokenIdentifier, Content: []rune("_5abc")},
+				{Kind: tokenize.TokenKeyword, Content: []rune("ALL")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: node.NewIdentifier("_5abc", false),
+			WantNode: node.NewKeyword(parse.KeywordCodeAll),
 		},
 		{
-			Message: `unquoted identifier`,
+			Message: `keyword`,
 			Input: []tokenize.Token{
-				{Kind: tokenize.TokenIdentifier, Content: []rune("abc5")},
+				{Kind: tokenize.TokenKeyword, Content: []rune("aSsErT_rOwS_mOdIfIeD")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: node.NewIdentifier("abc5", false),
-		},
-		{
-			Message: `quoted identifier`,
-			Input: []tokenize.Token{
-				{Kind: tokenize.TokenIdentifierQuoted, Content: []rune("`GROUP`")},
-				{Kind: tokenize.TokenEOF, Content: []rune("")},
-			},
-			WantNode: node.NewIdentifier("GROUP", true),
-		},
-		{
-			Message: `quoted identifier`,
-			Input: []tokenize.Token{
-				{Kind: tokenize.TokenIdentifierQuoted, Content: []rune("`gRouP`")},
-				{Kind: tokenize.TokenEOF, Content: []rune("")},
-			},
-			WantNode: node.NewIdentifier("gRouP", true),
-		},
-
-		{
-			Message: `number`,
-			Input: []tokenize.Token{
-				{Kind: tokenize.TokenLiteralInteger, Content: []rune("123")},
-				{Kind: tokenize.TokenEOF, Content: []rune("")},
-			},
-			ShouldErr: true,
+			WantNode: node.NewKeyword(parse.KeywordCodeAssertRowsModified),
 		},
 		{
 			Message: `keyword`,
 			Input: []tokenize.Token{
 				{Kind: tokenize.TokenKeyword, Content: []rune("GROUP")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: node.NewKeyword(parse.KeywordCodeGroup),
+		},
+		{
+			Message: `identifier`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("_GRouP")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			ShouldErr: true,
+		},
+		{
+			Message: `quotedidentifier`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifierQuoted, Content: []rune("`GROUP`")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			ShouldErr: true,
+		},
+		{
+			Message: `number`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenLiteralInteger, Content: []rune("123")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
 			ShouldErr: true,
@@ -83,16 +83,18 @@ func TestParseIdentifier(t *testing.T) {
 				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
 				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
-				{Kind: tokenize.TokenIdentifier, Content: []rune("abc")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenKeyword, Content: []rune("SELECT")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: node.NewIdentifier("abc", false),
+			WantNode: node.NewKeyword(parse.KeywordCodeSelect),
 		},
 	}
 
 	for i, testcase := range testcases {
 		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.Message), func(t *testing.T) {
-			test.TestParse(t, testcase, parser.ParseIdentifier)
+			test.TestParse(t, testcase, parser.ParseKeyword)
 		})
 	}
 }

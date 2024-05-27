@@ -153,3 +153,67 @@ func Tokenize(input []rune) ([]Token, error) {
 		}
 	}
 }
+
+func ScanNext(input []rune, k TokenKind) (token []rune, err error) {
+	s := &ScanState{Input: input}
+	switch k {
+	default:
+		return nil, fmt.Errorf("invalid token kind specified: %v", k)
+	case TokenEOF:
+		if s.Len() != 0 {
+			return nil, fmt.Errorf("%v not found", k)
+		}
+		return []rune{}, nil
+	case TokenSpace:
+		n, _, err := Spaces(s)
+		if err != nil {
+			return nil, err
+		}
+		return s.Input[:n], nil
+	case TokenComment:
+		n, _, err := Comment(s)
+		if err != nil {
+			return nil, err
+		}
+		return s.Input[:n], nil
+	case TokenIdentifier, TokenKeyword:
+		n, kind, err := IdentifierOrKeyword(s)
+		if err != nil {
+			return nil, err
+		}
+		if k != kind {
+			return nil, fmt.Errorf("%v not found", k)
+		}
+		return s.Input[:n], nil
+	case TokenIdentifierQuoted:
+		n, _, err := IdentifierQuoted(s)
+		if err != nil {
+			return nil, err
+		}
+		return s.Input[:n], nil
+	case TokenLiteralQuoted:
+		n, _, err := LiteralQuoted(s)
+		if err != nil {
+			return nil, err
+		}
+		return s.Input[:n], nil
+	case TokenLiteralInteger, TokenLiteralFloat:
+		n, kind, err := NumberOrDot(s)
+		if err != nil {
+			return nil, err
+		}
+		if k != kind {
+			return nil, fmt.Errorf("%v not found", k)
+		}
+		return s.Input[:n], nil
+	case TokenSpecialChar:
+		n, kind, err := SpecialChar(s)
+		if err != nil {
+			return nil, err
+		}
+		if k != kind {
+			return nil, fmt.Errorf("%v not found", k)
+		}
+		return s.Input[:n], nil
+	}
+}
