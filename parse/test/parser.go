@@ -1,6 +1,8 @@
 package test
 
 import (
+	"cloud.google.com/go/civil"
+	"encoding/json"
 	"fmt"
 	"github.com/Jumpaku/sqanner/parse"
 	"github.com/Jumpaku/sqanner/parse/node"
@@ -11,9 +13,11 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
+	"math/big"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 type testNodeDiffLine struct {
@@ -183,23 +187,38 @@ func assertNodeMatch[T node.Node](t *testing.T, want T, got T, failMsg string) {
 		assert.Equal(t, w.Type(), g.Type(), failMsg)
 		switch w.Type() {
 		case types.TypeCodeBool:
-			assert.Equal(t, w.BoolValue(), g.BoolValue(), failMsg)
+			assert.Equal(t,
+				lo.Must(strconv.ParseBool(w.Literal())),
+				lo.Must(strconv.ParseBool(g.Literal())), failMsg)
 		case types.TypeCodeInt64:
-			assert.Equal(t, w.Int64Value(), g.Int64Value(), failMsg)
+			assert.Equal(t,
+				lo.Must(strconv.ParseInt(w.Literal(), 0, 64)),
+				lo.Must(strconv.ParseInt(g.Literal(), 0, 64)), failMsg)
 		case types.TypeCodeFloat64:
-			assert.Equal(t, w.Float64Value(), g.Float64Value(), failMsg)
+			w, _, ew := new(big.Float).Parse(w.Literal(), 10)
+			g, _, eg := new(big.Float).Parse(g.Literal(), 10)
+			assert.Equal(t, lo.Must(w, ew), lo.Must(g, eg), failMsg)
 		case types.TypeCodeString:
-			assert.Equal(t, w.StringValue(), g.StringValue(), failMsg)
+			assert.Equal(t, w.Literal(), g.Literal(), failMsg)
 		case types.TypeCodeBytes:
-			assert.Equal(t, w.BytesValue(), g.BytesValue(), failMsg)
+			assert.Equal(t, []byte(w.Literal()), []byte(g.Literal()), failMsg)
 		case types.TypeCodeDate:
-			assert.Equal(t, w.DateValue(), g.DateValue(), failMsg)
+			assert.Equal(t,
+				lo.Must(civil.ParseDate(w.Literal())),
+				lo.Must(civil.ParseDate(g.Literal())), failMsg)
 		case types.TypeCodeTimestamp:
-			assert.Equal(t, w.TimestampValue(), g.TimestampValue(), failMsg)
+			assert.Equal(t,
+				lo.Must(time.Parse(time.RFC3339, w.Literal())),
+				lo.Must(time.Parse(time.RFC3339, g.Literal())), failMsg)
 		case types.TypeCodeJSON:
-			assert.Equal(t, w.JSONValue(), g.JSONValue(), failMsg)
+			var ww, gg any
+			lo.Must0(json.Unmarshal([]byte(w.Literal()), &ww))
+			lo.Must0(json.Unmarshal([]byte(g.Literal()), &gg))
+			assert.Equal(t, ww, gg)
 		case types.TypeCodeNumeric:
-			assert.Equal(t, w.NumericValue(), g.NumericValue(), failMsg)
+			assert.Equal(t,
+				lo.Must(new(big.Rat).SetString(w.Literal())),
+				lo.Must(new(big.Rat).SetString(g.Literal())), failMsg)
 
 		}
 	}

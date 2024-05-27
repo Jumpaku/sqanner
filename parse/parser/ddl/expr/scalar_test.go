@@ -1,18 +1,276 @@
 package expr_test
 
 import (
-	"bytes"
-	"cloud.google.com/go/civil"
-	"encoding/json"
 	"fmt"
 	"github.com/Jumpaku/sqanner/parse/node/ddl/expr"
 	parser_expr "github.com/Jumpaku/sqanner/parse/parser/ddl/expr"
 	"github.com/Jumpaku/sqanner/parse/test"
 	"github.com/Jumpaku/sqanner/tokenize"
-	"math/big"
 	"testing"
-	"time"
 )
+
+func TestParseScalar(t *testing.T) {
+	testcases := []test.Case[expr.ScalarNode]{
+		// BOOL
+		{
+			Message: `true`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("tRuE")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewBool("TRUE"),
+		},
+		{
+			Message: `false`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("FaLsE")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewBool("FALSE"),
+		},
+		{
+			Message: `starts with spaces`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("TRUE")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewBool("TRUE"),
+		},
+
+		// INT64
+		{
+			Message: `decimals`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenLiteralInteger, Content: []rune("123")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewInt64("123"),
+		},
+		{
+			Message: `lower hexadecimals`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenLiteralInteger, Content: []rune("0xdef")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewInt64("0xdef"),
+		},
+		{
+			Message: `upper hexadecimals`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenLiteralInteger, Content: []rune("0XABC")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewInt64("0xABC"),
+		},
+		{
+			Message: `starts with spaces`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenLiteralInteger, Content: []rune("123")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewInt64("123"),
+		},
+
+		// FLOAT64
+		{
+			Message: `exponent`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenLiteralFloat, Content: []rune("123.456e-67")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewFloat64("123.456e-67"),
+		},
+		{
+			Message: `starts with dot`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenLiteralFloat, Content: []rune(".1E4")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewFloat64(".1e4"),
+		},
+		{
+			Message: `ends with dot`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenLiteralFloat, Content: []rune("58.")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewFloat64("58."),
+		},
+		{
+			Message: `no dots`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenLiteralFloat, Content: []rune("4e2")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewFloat64("4e2"),
+		},
+		{
+			Message: `starts with spaces`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenLiteralFloat, Content: []rune("123.456e-67")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewFloat64("123.456e-67"),
+		},
+
+		// DATE
+		{
+			Message: `starts with spaces`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("dAtE")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenLiteralQuoted, Content: []rune("'2023-11-24'")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewDate("2023-11-24"),
+		},
+
+		// JSON
+		{
+			Message: `starts with spaces`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("JsOn")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenLiteralQuoted, Content: []rune(`"` + `{"a":-123.456,"b":"abc","c":true,"d":{"x":-1},"e":[1,"",false,{"x":{}},[]]}` + `"`)},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewJSON(`{"a":-123.456,"b":"abc","c":true,"d":{"x":-1},"e":[1,"",false,{"x":{}},[]]}`),
+		},
+
+		// TIMESTAMP
+		{
+			Message: `starts with spaces`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("tImEsTaMp")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenLiteralQuoted, Content: []rune("'" + "2023-11-24T15:20:10Z" + "'")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewTimestamp("2023-11-24T15:20:10Z"),
+		},
+
+		// NUMERIC
+		{
+			Message: `exponent`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("nUmeRiC")},
+				{Kind: tokenize.TokenLiteralQuoted, Content: []rune("'123.456e-67'")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewNumeric("123.456e-67"),
+		},
+		{
+			Message: `starts with dot`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("nUmeRiC")},
+				{Kind: tokenize.TokenLiteralQuoted, Content: []rune("'.1E4'")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewNumeric(".1E4"),
+		},
+		{
+			Message: `ends with dot`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("nUmeRiC")},
+				{Kind: tokenize.TokenLiteralQuoted, Content: []rune("'58.'")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewNumeric("58."),
+		},
+		{
+			Message: `no dots`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("nUmeRiC")},
+				{Kind: tokenize.TokenLiteralQuoted, Content: []rune("'4e2'")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewNumeric("4e2"),
+		},
+		{
+			Message: `starts with spaces`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenIdentifier, Content: []rune("nUmeRiC")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenLiteralQuoted, Content: []rune("'4e2'")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewNumeric("4e2"),
+		},
+
+		// STRING
+		{
+			Message: `starts with spaces`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenLiteralQuoted, Content: []rune("'abc'")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewString("'abc'"),
+		},
+
+		// BYTES
+		{
+			Message: `starts with spaces`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
+				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
+				{Kind: tokenize.TokenLiteralQuoted, Content: []rune("b'abc'")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: expr.NewBytes("b'abc'"),
+		},
+	}
+	for i, testcase := range testcases {
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.Message), func(t *testing.T) {
+			test.TestParse(t, testcase, parser_expr.ParseScalar)
+		})
+	}
+}
 
 func TestParseBool(t *testing.T) {
 	testcases := []test.Case[expr.ScalarNode]{
@@ -22,7 +280,7 @@ func TestParseBool(t *testing.T) {
 				{Kind: tokenize.TokenIdentifier, Content: []rune("tRuE")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: expr.NewBool(true),
+			WantNode: expr.NewBool("TRUE"),
 		},
 		{
 			Message: `false`,
@@ -30,7 +288,7 @@ func TestParseBool(t *testing.T) {
 				{Kind: tokenize.TokenIdentifier, Content: []rune("FaLsE")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: expr.NewBool(false),
+			WantNode: expr.NewBool("FALSE"),
 		},
 
 		{
@@ -51,7 +309,7 @@ func TestParseBool(t *testing.T) {
 				{Kind: tokenize.TokenIdentifier, Content: []rune("TRUE")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: expr.NewBool(true),
+			WantNode: expr.NewBool("TRUE"),
 		},
 	}
 
@@ -70,7 +328,7 @@ func TestParseInt64(t *testing.T) {
 				{Kind: tokenize.TokenLiteralInteger, Content: []rune("123")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: expr.NewInt64(123),
+			WantNode: expr.NewInt64("123"),
 		},
 		{
 			Message: `lower hexadecimals`,
@@ -78,7 +336,7 @@ func TestParseInt64(t *testing.T) {
 				{Kind: tokenize.TokenLiteralInteger, Content: []rune("0xdef")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: expr.NewInt64(0xdef),
+			WantNode: expr.NewInt64("0xdef"),
 		},
 		{
 			Message: `upper hexadecimals`,
@@ -86,7 +344,7 @@ func TestParseInt64(t *testing.T) {
 				{Kind: tokenize.TokenLiteralInteger, Content: []rune("0XABC")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: expr.NewInt64(0xABC),
+			WantNode: expr.NewInt64("0xABC"),
 		},
 		{
 			Message: `starts with spaces`,
@@ -98,7 +356,7 @@ func TestParseInt64(t *testing.T) {
 				{Kind: tokenize.TokenLiteralInteger, Content: []rune("123")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: expr.NewInt64(123),
+			WantNode: expr.NewInt64("123"),
 		},
 	}
 
@@ -117,7 +375,7 @@ func TestParseFloat64(t *testing.T) {
 				{Kind: tokenize.TokenLiteralFloat, Content: []rune("123.456e-67")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: expr.NewFloat64(123.456e-67),
+			WantNode: expr.NewFloat64("123.456e-67"),
 		},
 		{
 			Message: `starts with dot`,
@@ -125,7 +383,7 @@ func TestParseFloat64(t *testing.T) {
 				{Kind: tokenize.TokenLiteralFloat, Content: []rune(".1E4")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: expr.NewFloat64(.1e4),
+			WantNode: expr.NewFloat64(".1e4"),
 		},
 		{
 			Message: `ends with dot`,
@@ -133,7 +391,7 @@ func TestParseFloat64(t *testing.T) {
 				{Kind: tokenize.TokenLiteralFloat, Content: []rune("58.")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: expr.NewFloat64(58.),
+			WantNode: expr.NewFloat64("58."),
 		},
 		{
 			Message: `no dots`,
@@ -141,7 +399,7 @@ func TestParseFloat64(t *testing.T) {
 				{Kind: tokenize.TokenLiteralFloat, Content: []rune("4e2")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: expr.NewFloat64(4e2),
+			WantNode: expr.NewFloat64("4e2"),
 		},
 		{
 			Message: `starts with spaces`,
@@ -153,7 +411,7 @@ func TestParseFloat64(t *testing.T) {
 				{Kind: tokenize.TokenLiteralFloat, Content: []rune("123.456e-67")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: expr.NewFloat64(123.456e-67),
+			WantNode: expr.NewFloat64("123.456e-67"),
 		},
 	}
 
@@ -165,7 +423,6 @@ func TestParseFloat64(t *testing.T) {
 }
 
 func TestParseDate(t *testing.T) {
-	want, _ := civil.ParseDate("2023-11-24")
 	testcases := []test.Case[expr.ScalarNode]{
 		{
 			Message: `identifier`,
@@ -214,7 +471,7 @@ func TestParseDate(t *testing.T) {
 				{Kind: tokenize.TokenLiteralQuoted, Content: []rune("'2023-11-24'")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: expr.NewDate(want),
+			WantNode: expr.NewDate("2023-11-24"),
 		},
 	}
 
@@ -230,16 +487,15 @@ func TestParseDate_Quotes(t *testing.T) {
 	want := "2023-11-24"
 	for _, prefix := range []string{"", "r", "R"} {
 		for _, quote := range []string{`"`, `'`, `'''`, `"""`} {
-			date := prefix + quote + want + quote
-			w, _ := civil.ParseDate(want)
+			quoted := prefix + quote + want + quote
 			testcases = append(testcases, test.Case[expr.ScalarNode]{
-				Message: date,
+				Message: quoted,
 				Input: []tokenize.Token{
 					{Kind: tokenize.TokenIdentifier, Content: []rune("DATE")},
-					{Kind: tokenize.TokenLiteralQuoted, Content: []rune(date)},
+					{Kind: tokenize.TokenLiteralQuoted, Content: []rune(quoted)},
 					{Kind: tokenize.TokenEOF, Content: []rune("")},
 				},
-				WantNode: expr.NewDate(w),
+				WantNode: expr.NewDate(want),
 			})
 		}
 	}
@@ -266,11 +522,7 @@ func TestParseDate_Quotes(t *testing.T) {
 }
 
 func TestParseJSON(t *testing.T) {
-	jsonStr := `{"a":-123.456,"b":"abc","c":true,"d":{"x":-1},"e":[1,"",false,{"x":{}},[]]}`
-	dec := json.NewDecoder(bytes.NewBufferString(jsonStr))
-	dec.UseNumber()
-	var want any
-	_ = dec.Decode(&want)
+	want := `{"a":-123.456,"b":"abc","c":true,"d":{"x":-1},"e":[1,"",false,{"x":{}},[]]}`
 	testcases := []test.Case[expr.ScalarNode]{
 		{
 			Message: `identifier`,
@@ -316,7 +568,7 @@ func TestParseJSON(t *testing.T) {
 				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
 				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
-				{Kind: tokenize.TokenLiteralQuoted, Content: []rune(`"` + jsonStr + `"`)},
+				{Kind: tokenize.TokenLiteralQuoted, Content: []rune(`"` + want + `"`)},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
 			WantNode: expr.NewJSON(want),
@@ -335,20 +587,15 @@ func TestParseJSON_Quotes(t *testing.T) {
 	want := `{"a":-123.456,"b":"abc","c":true,"d":{"x":-1},"e":[1,"",false,{"x":{}}]}`
 	for _, prefix := range []string{"", "r", "R"} {
 		for _, quote := range []string{`"`, `'`, `'''`, `"""`} {
-			dec := json.NewDecoder(bytes.NewBufferString(want))
-			dec.UseNumber()
-			var w any
-			_ = dec.Decode(&w)
-
 			quoted := prefix + quote + want + quote
 			testcases = append(testcases, test.Case[expr.ScalarNode]{
-				Message: want,
+				Message: quoted,
 				Input: []tokenize.Token{
 					{Kind: tokenize.TokenIdentifier, Content: []rune("JSON")},
 					{Kind: tokenize.TokenLiteralQuoted, Content: []rune(quoted)},
 					{Kind: tokenize.TokenEOF, Content: []rune("")},
 				},
-				WantNode: expr.NewJSON(w),
+				WantNode: expr.NewJSON(want),
 			})
 		}
 	}
@@ -375,7 +622,7 @@ func TestParseJSON_Quotes(t *testing.T) {
 }
 
 func TestParseTimestamp(t *testing.T) {
-	want, _ := time.Parse(time.RFC3339, "2023-11-24T15:20:10Z")
+	want := "2023-11-24T15:20:10Z"
 	testcases := []test.Case[expr.ScalarNode]{
 		{
 			Message: `identifier`,
@@ -421,7 +668,7 @@ func TestParseTimestamp(t *testing.T) {
 				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
 				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
-				{Kind: tokenize.TokenLiteralQuoted, Content: []rune("'2023-11-24T15:20:10Z'")},
+				{Kind: tokenize.TokenLiteralQuoted, Content: []rune("'" + want + "'")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
 			WantNode: expr.NewTimestamp(want),
@@ -440,27 +687,26 @@ func TestParseTimestamp_Quotes(t *testing.T) {
 	want := "2023-11-24T15:20:10Z"
 	for _, prefix := range []string{"", "r", "R"} {
 		for _, quote := range []string{`"`, `'`, `'''`, `"""`} {
-			timestamp := prefix + quote + want + quote
-			w, _ := time.Parse(time.RFC3339, want)
+			quoted := prefix + quote + want + quote
 			testcases = append(testcases, test.Case[expr.ScalarNode]{
-				Message: timestamp,
+				Message: quoted,
 				Input: []tokenize.Token{
 					{Kind: tokenize.TokenIdentifier, Content: []rune("TIMESTAMP")},
-					{Kind: tokenize.TokenLiteralQuoted, Content: []rune(timestamp)},
+					{Kind: tokenize.TokenLiteralQuoted, Content: []rune(quoted)},
 					{Kind: tokenize.TokenEOF, Content: []rune("")},
 				},
-				WantNode: expr.NewTimestamp(w),
+				WantNode: expr.NewTimestamp(want),
 			})
 		}
 	}
 	for _, prefix := range []string{"b", "br", "bR", "B", "Br", "BR", "rB", "RB"} {
 		for _, quote := range []string{`"`, `'`, `'''`, `"""`} {
-			timestamp := prefix + quote + want + quote
+			quoted := prefix + quote + want + quote
 			testcases = append(testcases, test.Case[expr.ScalarNode]{
-				Message: timestamp,
+				Message: quoted,
 				Input: []tokenize.Token{
 					{Kind: tokenize.TokenIdentifier, Content: []rune("TIMESTAMP")},
-					{Kind: tokenize.TokenLiteralQuoted, Content: []rune(timestamp)},
+					{Kind: tokenize.TokenLiteralQuoted, Content: []rune(quoted)},
 					{Kind: tokenize.TokenEOF, Content: []rune("")},
 				},
 				ShouldErr: true,
@@ -476,7 +722,6 @@ func TestParseTimestamp_Quotes(t *testing.T) {
 }
 
 func TestParseNumeric(t *testing.T) {
-	must := func(v *big.Rat, ok bool) *big.Rat { return v }
 	testcases := []test.Case[expr.ScalarNode]{
 		{
 			Message: `exponent`,
@@ -485,7 +730,7 @@ func TestParseNumeric(t *testing.T) {
 				{Kind: tokenize.TokenLiteralQuoted, Content: []rune("'123.456e-67'")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: expr.NewNumeric(must(new(big.Rat).SetString("123.456e-67"))),
+			WantNode: expr.NewNumeric("123.456e-67"),
 		},
 		{
 			Message: `starts with dot`,
@@ -494,7 +739,7 @@ func TestParseNumeric(t *testing.T) {
 				{Kind: tokenize.TokenLiteralQuoted, Content: []rune("'.1E4'")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: expr.NewNumeric(must(new(big.Rat).SetString(".1E4"))),
+			WantNode: expr.NewNumeric(".1E4"),
 		},
 		{
 			Message: `ends with dot`,
@@ -503,7 +748,7 @@ func TestParseNumeric(t *testing.T) {
 				{Kind: tokenize.TokenLiteralQuoted, Content: []rune("'58.'")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: expr.NewNumeric(must(new(big.Rat).SetString("58."))),
+			WantNode: expr.NewNumeric("58."),
 		},
 		{
 			Message: `no dots`,
@@ -512,7 +757,7 @@ func TestParseNumeric(t *testing.T) {
 				{Kind: tokenize.TokenLiteralQuoted, Content: []rune("'4e2'")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: expr.NewNumeric(must(new(big.Rat).SetString("4e2"))),
+			WantNode: expr.NewNumeric("4e2"),
 		},
 		{
 			Message: `identifier`,
@@ -561,7 +806,7 @@ func TestParseNumeric(t *testing.T) {
 				{Kind: tokenize.TokenLiteralQuoted, Content: []rune("'4e2'")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: expr.NewNumeric(must(new(big.Rat).SetString("4e2"))),
+			WantNode: expr.NewNumeric("4e2"),
 		},
 	}
 
@@ -573,31 +818,30 @@ func TestParseNumeric(t *testing.T) {
 }
 
 func TestParseNumeric_Quotes(t *testing.T) {
-	must := func(v *big.Rat, ok bool) *big.Rat { return v }
 	testcases := []test.Case[expr.ScalarNode]{}
 	want := "123"
 	for _, prefix := range []string{"", "r", "R"} {
 		for _, quote := range []string{`"`, `'`, `'''`, `"""`} {
-			numStr := prefix + quote + want + quote
+			quoted := prefix + quote + want + quote
 			testcases = append(testcases, test.Case[expr.ScalarNode]{
-				Message: numStr,
+				Message: quoted,
 				Input: []tokenize.Token{
 					{Kind: tokenize.TokenIdentifier, Content: []rune("NUMERIC")},
-					{Kind: tokenize.TokenLiteralQuoted, Content: []rune(numStr)},
+					{Kind: tokenize.TokenLiteralQuoted, Content: []rune(quoted)},
 					{Kind: tokenize.TokenEOF, Content: []rune("")},
 				},
-				WantNode: expr.NewNumeric(must(new(big.Rat).SetString(want))),
+				WantNode: expr.NewNumeric(want),
 			})
 		}
 	}
 	for _, prefix := range []string{"b", "br", "bR", "B", "Br", "BR", "rB", "RB"} {
 		for _, quote := range []string{`"`, `'`, `'''`, `"""`} {
-			numStr := prefix + quote + want + quote
+			quoted := prefix + quote + want + quote
 			testcases = append(testcases, test.Case[expr.ScalarNode]{
-				Message: numStr,
+				Message: quoted,
 				Input: []tokenize.Token{
 					{Kind: tokenize.TokenIdentifier, Content: []rune("NUMERIC")},
-					{Kind: tokenize.TokenLiteralQuoted, Content: []rune(numStr)},
+					{Kind: tokenize.TokenLiteralQuoted, Content: []rune(quoted)},
 					{Kind: tokenize.TokenEOF, Content: []rune("")},
 				},
 				ShouldErr: true,
@@ -688,7 +932,7 @@ func TestParseString(t *testing.T) {
 				{Kind: tokenize.TokenLiteralQuoted, Content: []rune("'abc'")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: expr.NewString("abc"),
+			WantNode: expr.NewString("'abc'"),
 		},
 	}
 
@@ -711,7 +955,7 @@ func TestParseString_Quotes(t *testing.T) {
 					{Kind: tokenize.TokenLiteralQuoted, Content: []rune(w)},
 					{Kind: tokenize.TokenEOF, Content: []rune("")},
 				},
-				WantNode: expr.NewString(want),
+				WantNode: expr.NewString(w),
 			})
 		}
 	}
@@ -812,7 +1056,7 @@ func TestParseBytes(t *testing.T) {
 				{Kind: tokenize.TokenLiteralQuoted, Content: []rune("b'abc'")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			WantNode: expr.NewBytes([]byte("abc")),
+			WantNode: expr.NewBytes("b'abc'"),
 		},
 	}
 
@@ -835,7 +1079,7 @@ func TestParseBytes_Quotes(t *testing.T) {
 					{Kind: tokenize.TokenLiteralQuoted, Content: []rune(w)},
 					{Kind: tokenize.TokenEOF, Content: []rune("")},
 				},
-				WantNode: expr.NewBytes([]byte(want)),
+				WantNode: expr.NewBytes(w),
 			})
 		}
 	}
