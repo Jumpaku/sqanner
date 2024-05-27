@@ -1,50 +1,51 @@
 package node
 
 import (
-	"strings"
+	"github.com/Jumpaku/sqanner/parse"
 )
 
 type IdentifierNode interface {
 	Node
+	isIdentifierNode()
 	Value() string
-	IsQuoted() bool
-	UnquotedValue() string
+	RequiresQuotes() bool
+	QuotedValue() string
 }
 
-func Identifier(value string) NewNodeFunc[IdentifierNode] {
-	return func(begin, end int) IdentifierNode {
-		return identifier{
-			nodeBase: nodeBase{kind: KindIdentifier, begin: begin, end: end},
-			value:    value,
-		}
+var _ IdentifierNode = (*identifierNode)(nil)
+
+type identifierNode struct {
+	NodeBase
+	value          string
+	requiresQuotes bool
+}
+
+func AcceptIdentifier(s *parse.ParseState, value string, requiresQuotes bool) *identifierNode {
+	return &identifierNode{
+		NodeBase:       NewNodeBase(s.Begin(), s.End()),
+		value:          value,
+		requiresQuotes: requiresQuotes,
 	}
 }
 
-type identifier struct {
-	nodeBase
-	value string
+func NewIdentifier(value string, requiresQuotes bool) *identifierNode {
+	return &identifierNode{value: value, requiresQuotes: requiresQuotes}
 }
 
-var (
-	_ Node           = identifier{}
-	_ IdentifierNode = identifier{}
-)
-
-func (n identifier) Children() []Node {
-	return nil
-}
-
-func (n identifier) Value() string {
+func (n *identifierNode) Value() string {
 	return n.value
 }
 
-func (n identifier) IsQuoted() bool {
-	return strings.HasPrefix(n.Value(), "`")
+func (n *identifierNode) RequiresQuotes() bool {
+	return n.requiresQuotes
 }
 
-func (n identifier) UnquotedValue() string {
-	if n.IsQuoted() {
-		return n.Value()
-	}
-	return n.value[1 : len(n.value)-1]
+func (n *identifierNode) QuotedValue() string {
+	return "`" + n.value + "`"
 }
+
+func (n *identifierNode) Children() []Node {
+	return nil
+}
+
+func (n *identifierNode) isIdentifierNode() {}

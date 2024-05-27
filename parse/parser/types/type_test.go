@@ -1,214 +1,232 @@
-package parser_test
+package types_test
 
 import (
 	"fmt"
 	"github.com/Jumpaku/sqanner/parse/node"
-	"github.com/Jumpaku/sqanner/parse/parser"
+	"github.com/Jumpaku/sqanner/parse/node/types"
+	perser_types "github.com/Jumpaku/sqanner/parse/parser/types"
+	"github.com/Jumpaku/sqanner/parse/test"
 	"github.com/Jumpaku/sqanner/tokenize"
 	"testing"
 )
 
 func TestParseType_Scalar(t *testing.T) {
-	testcases := []testcase[node.TypeNode]{
+	testcases := []test.Case[types.TypeNode]{
 		{
-			message: `bool`,
-			input: []tokenize.Token{
+			Message: `bool`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune("bool")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.BoolType()),
+			WantNode: types.NewBool(),
 		},
 		{
-			message: `bool`,
-			input: []tokenize.Token{
+			Message: `bool`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune("BOOL")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.BoolType()),
+			WantNode: types.NewBool(),
 		},
 		{
-			message: `int64`,
-			input: []tokenize.Token{
+			Message: `int64`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune("int64")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.Int64Type()),
+			WantNode: types.NewInt64(),
 		},
 		{
-			message: `int64`,
-			input: []tokenize.Token{
+			Message: `int64`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune("INT64")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.Int64Type()),
+			WantNode: types.NewInt64(),
 		},
 		{
-			message: `float64`,
-			input: []tokenize.Token{
+			Message: `float64`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune("float64")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.Float64Type()),
+			WantNode: types.NewFloat64(),
 		},
 		{
-			message: `float64`,
-			input: []tokenize.Token{
+			Message: `float64`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune("FLOAT64")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.Float64Type()),
+			WantNode: types.NewFloat64(),
 		},
 		{
-			message: `numeric`,
-			input: []tokenize.Token{
+			Message: `numeric`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune("numeric")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.NumericType()),
+			WantNode: types.NewNumeric(),
 		},
 		{
-			message: `numeric`,
-			input: []tokenize.Token{
+			Message: `numeric`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune("NUMERIC")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.NumericType()),
+			WantNode: types.NewNumeric(),
 		},
 		{
-			message: `json`,
-			input: []tokenize.Token{
+			Message: `json`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune("json")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.JSONType()),
+			WantNode: types.NewJSON(),
 		},
 		{
-			message: `json`,
-			input: []tokenize.Token{
+			Message: `json`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune("JSON")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.JSONType()),
+			WantNode: types.NewJSON(),
 		},
 		{
-			message: `date`,
-			input: []tokenize.Token{
+			Message: `date`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune("date")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.DateType()),
+			WantNode: types.NewDate(),
 		},
 		{
-			message: `date`,
-			input: []tokenize.Token{
+			Message: `date`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune("DATE")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.DateType()),
+			WantNode: types.NewDate(),
 		},
 		{
-			message: `timestamp`,
-			input: []tokenize.Token{
+			Message: `timestamp`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune("timestamp")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.TimestampType()),
+			WantNode: types.NewTimestamp(),
 		},
 		{
-			message: `timestamp`,
-			input: []tokenize.Token{
+			Message: `timestamp`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune("TIMESTAMP")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.TimestampType()),
+			WantNode: types.NewTimestamp(),
 		},
 		{
-			message: `string`,
-			input: []tokenize.Token{
+			Message: `string`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune("string")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("(")},
 				{Kind: tokenize.TokenLiteralInteger, Content: []rune("123")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(")")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.StringTypeSized(nodeOf(node.TypeSize(123)))),
+			WantNode: types.NewStringSized(types.NewTypeSize(123)),
 		},
 		{
-			message: `string`,
-			input: []tokenize.Token{
+			Message: `string`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune("STRING")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("(")},
 				{Kind: tokenize.TokenIdentifier, Content: []rune("MAX")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(")")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.StringTypeSized(nodeOf(node.TypeSizeMax()))),
+			WantNode: types.NewStringSized(types.NewTypeSizeMax()),
 		},
 		{
-			message: `bytes`,
-			input: []tokenize.Token{
+			Message: `not sized string`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("STRING")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: types.NewString(),
+		},
+		{
+			Message: `bytes`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune("bytes")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("(")},
 				{Kind: tokenize.TokenLiteralInteger, Content: []rune("123")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(")")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.BytesTypeSized(nodeOf(node.TypeSize(123)))),
+			WantNode: types.NewBytesSized(types.NewTypeSize(123)),
 		},
 		{
-			message: `bytes`,
-			input: []tokenize.Token{
+			Message: `bytes`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune("BYTES")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("(")},
 				{Kind: tokenize.TokenIdentifier, Content: []rune("MAX")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(")")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.BytesTypeSized(nodeOf(node.TypeSizeMax()))),
+			WantNode: types.NewBytesSized(types.NewTypeSizeMax()),
 		},
 		{
-			message: `identifier`,
-			input: []tokenize.Token{
+			Message: `not sized bytes`,
+			Input: []tokenize.Token{
+				{Kind: tokenize.TokenIdentifier, Content: []rune("BYTES")},
+				{Kind: tokenize.TokenEOF, Content: []rune("")},
+			},
+			WantNode: types.NewBytes(),
+		},
+		{
+			Message: `identifier`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune("_GRouP")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			shouldErr: true,
+			ShouldErr: true,
 		},
 		{
-			message: `quoted identifier`,
-			input: []tokenize.Token{
+			Message: `quoted identifier`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifierQuoted, Content: []rune("`INT64`")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			shouldErr: true,
+			ShouldErr: true,
 		},
 		{
-			message: `number`,
-			input: []tokenize.Token{
+			Message: `number`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenLiteralInteger, Content: []rune("123")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			shouldErr: true,
+			ShouldErr: true,
 		},
 		{
-			message: `dot`,
-			input: []tokenize.Token{
+			Message: `dot`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(".")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			shouldErr: true,
+			ShouldErr: true,
 		},
 		{
-			message: `special char`,
-			input: []tokenize.Token{
+			Message: `special char`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("@")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			shouldErr: true,
+			ShouldErr: true,
 		},
 		{
-			message: `starts with spaces`,
-			input: []tokenize.Token{
+			Message: `starts with spaces`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
 				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
@@ -232,99 +250,99 @@ func TestParseType_Scalar(t *testing.T) {
 				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.BytesTypeSized(nodeOf(node.TypeSize(123)))),
+			WantNode: types.NewBytesSized(types.NewTypeSize(123)),
 		},
 	}
 
 	for i, testcase := range testcases {
-		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
-			testParse(t, testcase, parser.ParseType)
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.Message), func(t *testing.T) {
+			test.TestParse(t, testcase, perser_types.ParseType)
 		})
 	}
 }
 
 func TestParseType_Array(t *testing.T) {
-	testcases := []testcase[node.TypeNode]{
+	testcases := []test.Case[types.TypeNode]{
 		{
-			message: `array of bool`,
-			input: []tokenize.Token{
+			Message: `array of bool`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenKeyword, Content: []rune("ARRAY")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
 				{Kind: tokenize.TokenIdentifier, Content: []rune("BOOL")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.ArrayType(nodeOf(node.BoolType()))),
+			WantNode: types.NewArray(types.NewBool()),
 		},
 		{
-			message: `array of int64`,
-			input: []tokenize.Token{
+			Message: `array of int64`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenKeyword, Content: []rune("ARRAY")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
 				{Kind: tokenize.TokenIdentifier, Content: []rune("INT64")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.ArrayType(nodeOf(node.Int64Type()))),
+			WantNode: types.NewArray(types.NewInt64()),
 		},
 		{
-			message: `array of float64`,
-			input: []tokenize.Token{
+			Message: `array of float64`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenKeyword, Content: []rune("ARRAY")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
 				{Kind: tokenize.TokenIdentifier, Content: []rune("FLOAT64")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.ArrayType(nodeOf(node.Float64Type()))),
+			WantNode: types.NewArray(types.NewFloat64()),
 		},
 		{
-			message: `array of numeric`,
-			input: []tokenize.Token{
+			Message: `array of numeric`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenKeyword, Content: []rune("ARRAY")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
 				{Kind: tokenize.TokenIdentifier, Content: []rune("NUMERIC")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.ArrayType(nodeOf(node.NumericType()))),
+			WantNode: types.NewArray(types.NewNumeric()),
 		},
 		{
-			message: `array of json`,
-			input: []tokenize.Token{
+			Message: `array of json`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenKeyword, Content: []rune("ARRAY")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
 				{Kind: tokenize.TokenIdentifier, Content: []rune("JSON")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.ArrayType(nodeOf(node.JSONType()))),
+			WantNode: types.NewArray(types.NewJSON()),
 		},
 		{
-			message: `array of date`,
-			input: []tokenize.Token{
+			Message: `array of date`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenKeyword, Content: []rune("ARRAY")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
 				{Kind: tokenize.TokenIdentifier, Content: []rune("DATE")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.ArrayType(nodeOf(node.DateType()))),
+			WantNode: types.NewArray(types.NewDate()),
 		},
 		{
-			message: `array of timestamp`,
-			input: []tokenize.Token{
+			Message: `array of timestamp`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenKeyword, Content: []rune("ARRAY")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
 				{Kind: tokenize.TokenIdentifier, Content: []rune("TIMESTAMP")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.ArrayType(nodeOf(node.TimestampType()))),
+			WantNode: types.NewArray(types.NewTimestamp()),
 		},
 		{
-			message: `array of string`,
-			input: []tokenize.Token{
+			Message: `array of string`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenKeyword, Content: []rune("ARRAY")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
 				{Kind: tokenize.TokenIdentifier, Content: []rune("STRING")},
@@ -334,11 +352,11 @@ func TestParseType_Array(t *testing.T) {
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.ArrayType(nodeOf(node.StringTypeSized(nodeOf(node.TypeSizeMax()))))),
+			WantNode: types.NewArray(types.NewStringSized(types.NewTypeSizeMax())),
 		},
 		{
-			message: `array of bytes`,
-			input: []tokenize.Token{
+			Message: `array of bytes`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenKeyword, Content: []rune("ARRAY")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
 				{Kind: tokenize.TokenIdentifier, Content: []rune("BYTES")},
@@ -348,11 +366,11 @@ func TestParseType_Array(t *testing.T) {
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.ArrayType(nodeOf(node.BytesTypeSized(nodeOf(node.TypeSize(123)))))),
+			WantNode: types.NewArray(types.NewBytesSized(types.NewTypeSize(123))),
 		},
 		{
-			message: `including spaces`,
-			input: []tokenize.Token{
+			Message: `including spaces`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 				{Kind: tokenize.TokenComment, Content: []rune("/* comment */")},
 				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
@@ -384,22 +402,22 @@ func TestParseType_Array(t *testing.T) {
 				{Kind: tokenize.TokenSpace, Content: []rune(" ")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.ArrayType(nodeOf(node.BytesTypeSized(nodeOf(node.TypeSize(123)))))),
+			WantNode: types.NewArray(types.NewBytesSized(types.NewTypeSize(123))),
 		},
 	}
 
 	for i, testcase := range testcases {
-		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
-			testParse(t, testcase, parser.ParseType)
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.Message), func(t *testing.T) {
+			test.TestParse(t, testcase, perser_types.ParseType)
 		})
 	}
 }
 
 func TestParseType_Struct(t *testing.T) {
-	testcases := []testcase[node.TypeNode]{
+	testcases := []test.Case[types.TypeNode]{
 		{
-			message: `struct with unnamed fields`,
-			input: []tokenize.Token{
+			Message: `struct with unnamed fields`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenKeyword, Content: []rune("STRUCT")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
 				{Kind: tokenize.TokenIdentifier, Content: []rune("int64")},
@@ -416,25 +434,25 @@ func TestParseType_Struct(t *testing.T) {
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.StructType([]node.StructTypeFieldNode{
-				nodeOf(node.StructTypeFieldUnnamed(nodeOf(node.Int64Type()))),
-				nodeOf(node.StructTypeFieldUnnamed(nodeOf(node.StringTypeSized(nodeOf(node.TypeSize(123)))))),
-				nodeOf(node.StructTypeFieldUnnamed(nodeOf(node.BytesTypeSized(nodeOf(node.TypeSizeMax()))))),
-			})),
+			WantNode: types.NewStruct([]types.StructFieldNode{
+				types.NewStructFieldUnnamed(types.NewInt64()),
+				types.NewStructFieldUnnamed(types.NewStringSized(types.NewTypeSize(123))),
+				types.NewStructFieldUnnamed(types.NewBytesSized(types.NewTypeSizeMax())),
+			}),
 		},
 		{
-			message: `empty struct`,
-			input: []tokenize.Token{
+			Message: `empty struct`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenKeyword, Content: []rune("STRUCT")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.StructType([]node.StructTypeFieldNode{})),
+			WantNode: types.NewStruct([]types.StructFieldNode{}),
 		},
 		{
-			message: `struct with named fields`,
-			input: []tokenize.Token{
+			Message: `struct with named fields`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenKeyword, Content: []rune("STRUCT")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
 				{Kind: tokenize.TokenIdentifier, Content: []rune("a")},
@@ -448,25 +466,25 @@ func TestParseType_Struct(t *testing.T) {
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.StructType([]node.StructTypeFieldNode{
-				nodeOf(node.StructTypeField(nodeOf(node.Identifier("a")), nodeOf(node.Int64Type()))),
-				nodeOf(node.StructTypeField(nodeOf(node.Identifier("b")), nodeOf(node.StringType()))),
-			})),
+			WantNode: types.NewStruct([]types.StructFieldNode{
+				types.NewStructField(node.NewIdentifier("a", false), types.NewInt64()),
+				types.NewStructField(node.NewIdentifier("b", false), types.NewString()),
+			}),
 		},
 	}
 
 	for i, testcase := range testcases {
-		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
-			testParse(t, testcase, parser.ParseType)
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.Message), func(t *testing.T) {
+			test.TestParse(t, testcase, perser_types.ParseType)
 		})
 	}
 }
 
 func TestParseType_Complex(t *testing.T) {
-	testcases := []testcase[node.TypeNode]{
+	testcases := []test.Case[types.TypeNode]{
 		{
-			message: `struct in struct`,
-			input: []tokenize.Token{
+			Message: `struct in struct`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenKeyword, Content: []rune("STRUCT")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
 				{Kind: tokenize.TokenIdentifier, Content: []rune("x")},
@@ -485,18 +503,18 @@ func TestParseType_Complex(t *testing.T) {
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.StructType([]node.StructTypeFieldNode{
-				nodeOf(node.StructTypeField(
-					nodeOf(node.Identifier("x")),
-					nodeOf(node.StructType([]node.StructTypeFieldNode{
-						nodeOf(node.StructTypeField(nodeOf(node.Identifier("y")), nodeOf(node.Int64Type()))),
-						nodeOf(node.StructTypeField(nodeOf(node.Identifier("z")), nodeOf(node.Int64Type()))),
-					})))),
-			})),
+			WantNode: types.NewStruct([]types.StructFieldNode{
+				types.NewStructField(
+					node.NewIdentifier("x", false),
+					types.NewStruct([]types.StructFieldNode{
+						types.NewStructField(node.NewIdentifier("y", false), types.NewInt64()),
+						types.NewStructField(node.NewIdentifier("z", false), types.NewInt64()),
+					})),
+			}),
 		},
 		{
-			message: `array in struct`,
-			input: []tokenize.Token{
+			Message: `array in struct`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenKeyword, Content: []rune("STRUCT")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
 				{Kind: tokenize.TokenIdentifier, Content: []rune("inner_array")},
@@ -508,15 +526,15 @@ func TestParseType_Complex(t *testing.T) {
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.StructType([]node.StructTypeFieldNode{
-				nodeOf(node.StructTypeField(
-					nodeOf(node.Identifier("inner_array")),
-					nodeOf(node.ArrayType(nodeOf(node.Int64Type()))))),
-			})),
+			WantNode: types.NewStruct([]types.StructFieldNode{
+				types.NewStructField(
+					node.NewIdentifier("inner_array", false),
+					types.NewArray(types.NewInt64())),
+			}),
 		},
 		{
-			message: `struct in array`,
-			input: []tokenize.Token{
+			Message: `struct in array`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenKeyword, Content: []rune("ARRAY")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
 				{Kind: tokenize.TokenKeyword, Content: []rune("STRUCT")},
@@ -529,15 +547,15 @@ func TestParseType_Complex(t *testing.T) {
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.ArrayType(
-				nodeOf(node.StructType([]node.StructTypeFieldNode{
-					nodeOf(node.StructTypeFieldUnnamed(nodeOf(node.Int64Type()))),
-					nodeOf(node.StructTypeFieldUnnamed(nodeOf(node.Int64Type()))),
-				})))),
+			WantNode: types.NewArray(
+				types.NewStruct([]types.StructFieldNode{
+					types.NewStructFieldUnnamed(types.NewInt64()),
+					types.NewStructFieldUnnamed(types.NewInt64()),
+				})),
 		},
 		{
-			message: ``,
-			input: []tokenize.Token{
+			Message: ``,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenKeyword, Content: []rune("ARRAY")},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune("<")},
 				{Kind: tokenize.TokenKeyword, Content: []rune("STRUCT")},
@@ -550,17 +568,17 @@ func TestParseType_Complex(t *testing.T) {
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(">")},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.ArrayType(
-				nodeOf(node.StructType([]node.StructTypeFieldNode{
-					nodeOf(node.StructTypeFieldUnnamed(
-						nodeOf(node.ArrayType(nodeOf(node.Int64Type()))))),
-				})))),
+			WantNode: types.NewArray(
+				types.NewStruct([]types.StructFieldNode{
+					types.NewStructFieldUnnamed(
+						types.NewArray(types.NewInt64())),
+				})),
 		},
 	}
 
 	for i, testcase := range testcases {
-		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
-			testParse(t, testcase, parser.ParseType)
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.Message), func(t *testing.T) {
+			test.TestParse(t, testcase, perser_types.ParseType)
 		})
 	}
 }

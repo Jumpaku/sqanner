@@ -1,45 +1,47 @@
-package parser_test
+package types_test
 
 import (
 	"fmt"
 	"github.com/Jumpaku/sqanner/parse/node"
-	"github.com/Jumpaku/sqanner/parse/parser"
+	"github.com/Jumpaku/sqanner/parse/node/types"
+	perser_types "github.com/Jumpaku/sqanner/parse/parser/types"
+	"github.com/Jumpaku/sqanner/parse/test"
 	"github.com/Jumpaku/sqanner/tokenize"
 	"testing"
 )
 
-func TestParseStructTypeField(t *testing.T) {
-	testcases := []testcase[node.StructTypeFieldNode]{
+func TestParseStructField(t *testing.T) {
+	testcases := []test.Case[types.StructFieldNode]{
 		{
-			message: `unnamed field`,
-			input: []tokenize.Token{
+			Message: `unnamed field`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune(`INT64`)},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.StructTypeFieldUnnamed(nodeOf(node.Int64Type()))),
+			WantNode: types.NewStructFieldUnnamed(types.NewInt64()),
 		},
 		{
-			message: `unnamed field`,
-			input: []tokenize.Token{
+			Message: `unnamed field`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune(`STRING`)},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.StructTypeFieldUnnamed(nodeOf(node.StringType()))),
+			WantNode: types.NewStructFieldUnnamed(types.NewString()),
 		},
 		{
-			message: `unnamed field`,
-			input: []tokenize.Token{
+			Message: `unnamed field`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune(`STRING`)},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(`(`)},
 				{Kind: tokenize.TokenIdentifier, Content: []rune(`MAX`)},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(`)`)},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.StructTypeFieldUnnamed(nodeOf(node.StringTypeSized(nodeOf(node.TypeSizeMax()))))),
+			WantNode: types.NewStructFieldUnnamed(types.NewStringSized(types.NewTypeSizeMax())),
 		},
 		{
-			message: `unnamed field`,
-			input: []tokenize.Token{
+			Message: `unnamed field`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenKeyword, Content: []rune(`ARRAY`)},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(`<`)},
 				{Kind: tokenize.TokenIdentifier, Content: []rune(`STRING`)},
@@ -49,29 +51,29 @@ func TestParseStructTypeField(t *testing.T) {
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(`>`)},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.StructTypeFieldUnnamed(nodeOf(node.ArrayType(nodeOf(node.StringTypeSized(nodeOf(node.TypeSizeMax()))))))),
+			WantNode: types.NewStructFieldUnnamed(types.NewArray(types.NewStringSized(types.NewTypeSizeMax()))),
 		},
 		{
-			message: `named field`,
-			input: []tokenize.Token{
+			Message: `named field`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune(`abc`)},
 				{Kind: tokenize.TokenIdentifier, Content: []rune(`INT64`)},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.StructTypeField(nodeOf(node.Identifier(`abc`)), nodeOf(node.Int64Type()))),
+			WantNode: types.NewStructField(node.NewIdentifier(`abc`, false), types.NewInt64()),
 		},
 		{
-			message: `named field`,
-			input: []tokenize.Token{
+			Message: `named field`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune(`abc`)},
 				{Kind: tokenize.TokenIdentifier, Content: []rune(`STRING`)},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.StructTypeField(nodeOf(node.Identifier(`abc`)), nodeOf(node.StringType()))),
+			WantNode: types.NewStructField(node.NewIdentifier(`abc`, false), types.NewString()),
 		},
 		{
-			message: `named field`,
-			input: []tokenize.Token{
+			Message: `named field`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune(`abc`)},
 				{Kind: tokenize.TokenIdentifier, Content: []rune(`STRING`)},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(`(`)},
@@ -79,11 +81,11 @@ func TestParseStructTypeField(t *testing.T) {
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(`)`)},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.StructTypeField(nodeOf(node.Identifier(`abc`)), nodeOf(node.StringTypeSized(nodeOf(node.TypeSizeMax()))))),
+			WantNode: types.NewStructField(node.NewIdentifier(`abc`, false), types.NewStringSized(types.NewTypeSizeMax())),
 		},
 		{
-			message: `named field`,
-			input: []tokenize.Token{
+			Message: `named field`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenIdentifier, Content: []rune(`abc`)},
 				{Kind: tokenize.TokenKeyword, Content: []rune(`ARRAY`)},
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(`<`)},
@@ -94,11 +96,11 @@ func TestParseStructTypeField(t *testing.T) {
 				{Kind: tokenize.TokenSpecialChar, Content: []rune(`>`)},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.StructTypeField(nodeOf(node.Identifier(`abc`)), nodeOf(node.ArrayType(nodeOf(node.StringTypeSized(nodeOf(node.TypeSizeMax()))))))),
+			WantNode: types.NewStructField(node.NewIdentifier(`abc`, false), types.NewArray(types.NewStringSized(types.NewTypeSizeMax()))),
 		},
 		{
-			message: `with spaces`,
-			input: []tokenize.Token{
+			Message: `with spaces`,
+			Input: []tokenize.Token{
 				{Kind: tokenize.TokenSpace, Content: []rune(` `)},
 				{Kind: tokenize.TokenIdentifier, Content: []rune(`abc`)},
 				{Kind: tokenize.TokenSpace, Content: []rune(` `)},
@@ -118,13 +120,13 @@ func TestParseStructTypeField(t *testing.T) {
 				{Kind: tokenize.TokenSpace, Content: []rune(` `)},
 				{Kind: tokenize.TokenEOF, Content: []rune("")},
 			},
-			wantNode: nodeOf(node.StructTypeField(nodeOf(node.Identifier(`abc`)), nodeOf(node.ArrayType(nodeOf(node.StringTypeSized(nodeOf(node.TypeSizeMax()))))))),
+			WantNode: types.NewStructField(node.NewIdentifier(`abc`, false), types.NewArray(types.NewStringSized(types.NewTypeSizeMax()))),
 		},
 	}
 
 	for i, testcase := range testcases {
-		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.message), func(t *testing.T) {
-			testParse(t, testcase, parser.ParseStructField)
+		t.Run(fmt.Sprintf(`case[%d]:%s`, i, testcase.Message), func(t *testing.T) {
+			test.TestParse(t, testcase, perser_types.ParseStructField)
 		})
 	}
 }

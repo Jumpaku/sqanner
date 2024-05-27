@@ -2,17 +2,24 @@ package parser
 
 import (
 	"fmt"
+	"github.com/Jumpaku/sqanner/parse"
 	"github.com/Jumpaku/sqanner/parse/node"
 	"github.com/Jumpaku/sqanner/tokenize"
 )
 
-func ParseKeyword(s *ParseState) (node.KeywordNode, error) {
-	s.SkipSpacesAndComments()
+func ParseKeyword(s *parse.ParseState) (node.KeywordNode, error) {
+	s.Skip()
 
 	t := s.PeekAt(0)
-	if !IsAnyKind(t, tokenize.TokenKeyword) {
-		return nil, Error(s, fmt.Errorf(`keyword not found`))
+	if !parse.MatchAnyTokenKind(t, tokenize.TokenKeyword) {
+		return nil, s.WrapError(fmt.Errorf(`keyword not found`))
+	}
+	s.Move(1)
+
+	k, err := parse.OfKeyword(string(t.Content))
+	if err != nil {
+		return nil, s.WrapError(fmt.Errorf(`invalid keyword: %q`, string(t.Content)))
 	}
 
-	return Accept(s, node.Keyword(node.KeywordCodeOf(string(t.Content)))), nil
+	return node.AcceptKeyword(s, k), nil
 }

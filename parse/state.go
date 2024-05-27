@@ -1,8 +1,7 @@
-package parser
+package parse
 
 import (
 	"fmt"
-	"github.com/Jumpaku/sqanner/parse/node"
 	"github.com/Jumpaku/sqanner/tokenize"
 )
 
@@ -16,12 +15,17 @@ func NewParseState(input []tokenize.Token) *ParseState {
 	return &ParseState{input: input}
 }
 
-func (s *ParseState) Child() *ParseState {
+func (s *ParseState) clone() *ParseState {
 	return &ParseState{
 		input:  s.input,
-		begin:  s.cursor,
+		begin:  s.begin,
 		cursor: s.cursor,
 	}
+}
+func (s *ParseState) Child() *ParseState {
+	child := s.clone()
+	child.begin = s.cursor
+	return child
 }
 
 func (s *ParseState) PeekAt(offset int) tokenize.Token {
@@ -36,25 +40,31 @@ func (s *ParseState) Move(offset int) {
 	s.cursor += offset
 }
 
-func (s *ParseState) SkipSpacesAndComments() {
+func (s *ParseState) Skip() {
 	offset := 0
-	for offset < s.Len() && IsAnyKind(s.PeekAt(offset), tokenize.TokenComment, tokenize.TokenSpace) {
+	for offset < s.Len() && MatchAnyTokenKind(s.PeekAt(offset), tokenize.TokenComment, tokenize.TokenSpace) {
 		offset++
 	}
 	s.Move(offset)
 }
+func (s *ParseState) Begin() int {
+	return s.begin
+}
+func (s *ParseState) End() int {
+	return s.cursor
+}
 
-func Error(s *ParseState, err error) error {
+func (s *ParseState) WrapError(err error) error {
 	t := s.PeekAt(0)
 
-	begin := s.cursor
-	if begin > 0 {
-		begin--
+	begin := s.cursor - 1
+	if begin < 0 {
+		begin = 0
 	}
 
-	end := s.cursor + 1
-	if s.Len() > 0 {
-		end++
+	end := s.cursor + 2
+	if end > len(s.input) {
+		end = len(s.input)
 	}
 
 	var contents []string
@@ -63,8 +73,4 @@ func Error(s *ParseState, err error) error {
 	}
 
 	return fmt.Errorf(`fail to parse during processing tokens near ...%v...: line=%d, column=%d: %w`, contents, t.Line, t.Column, err)
-}
-
-func Accept[T node.Node](s *ParseState, nodeFunc node.NewNodeFunc[T]) T {
-	return nodeFunc(s.begin, s.cursor)
 }
